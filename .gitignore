@@ -1,0 +1,54 @@
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Entornos virtuales
+.env
+.venv/
+venv/
+ENV/
+
+# Archivos de configuración locales
+*.log
+*.pid
+*.gz
+
+# -------------------------
+# Node (React, Expo)
+# -------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+.expo/
+.expo-shared/
+dist/
+build/
+
+# -------------------------
+# Docker
+# -------------------------
+*.pid
+*.seed
+*.bak
+*.tar
+*.tmp
+
+# Archivos generados por Docker
+docker-compose.override.yml
+
+# -------------------------
+# IDEs / SO
+# -------------------------
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
