@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String
-from app.db import Base
+from sqlalchemy import Column, Integer, TIMESTAMP
+from .db import Base
 
-class Usuario(Base):
-    __tablename__ = "usuarios"
-    id = Column(Integer, primary_key=True, index=True)
-    nombre = Column(String, index=True)
-    email = Column(String, unique=True, index=True)
+class EstacionamientoEstado(Base):
+    __tablename__ = "estacionamiento_estado"
+
+    estacionamiento_numero = Column(Integer, primary_key=True, index=True)
+    estado = Column(Integer, nullable=False)  
+    updated_at = Column(TIMESTAMP, nullable=False)
