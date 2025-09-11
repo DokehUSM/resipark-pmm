@@ -1,7 +1,7 @@
 import { RFValue } from "react-native-responsive-fontsize";
 
 export const Typography = {
-  h1: RFValue(30, 812),   // 24px relativo al alto de referencia
+  h1: RFValue(28, 812),   // 24px relativo al alto de referencia
   h2: RFValue(20, 812),
   body: RFValue(18, 812),
   small: RFValue(16, 812),
