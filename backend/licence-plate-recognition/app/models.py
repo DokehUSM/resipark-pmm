@@ -6,3 +6,4 @@ class Usuario(Base):
     id = Column(Integer, primary_key=True, index=True)
     nombre = Column(String, index=True)
     email = Column(String, unique=True, index=True)
+
