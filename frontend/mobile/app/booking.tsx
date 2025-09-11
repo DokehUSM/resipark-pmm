@@ -1,10 +1,11 @@
-import { View, Text, Button } from 'react-native';
+import { View, Text, Button } from "react-native";
+import { router } from "expo-router";
 
-export default function BookingScreen({ navigation }) {
+export default function Booking() {
   return (
-    <View style={{ flex:1, alignItems:'center', justifyContent:'center' }}>
-      <Text>Pantalla Booking</Text>
-      <Button title="Cuenta" onPress={() => navigation.navigate('Account')} />
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+      <Text style={{ fontSize: 20, marginBottom: 20 }}>Pantalla Booking</Text>
+      <Button title="Ir a Cuenta" onPress={() => router.push("/account")} />
     </View>
   );
 }

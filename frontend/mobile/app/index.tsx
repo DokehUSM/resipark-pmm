@@ -1,11 +1,11 @@
 import { View, Text, Button } from "react-native";
-import { Link } from "expo-router";
+import { router } from "expo-router";
 
-export default function Index() {
+export default function Login() {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-      <Text>Pantalla Login</Text>
-      <Link href="/onboarding">Ir a Onboarding</Link>
+      <Text style={{ fontSize: 20, marginBottom: 20 }}>Pantalla Login</Text>
+      <Button title="Ingresar" onPress={() => router.push("/onboarding")} />
     </View>
   );
 }
