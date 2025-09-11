@@ -11,7 +11,7 @@ export default function Account() {
 
       {/* Avatar */}
       <View style={styles.avatar}>
-        <Ionicons name="person-outline" size={64} color={Colors.gray} />
+        <Ionicons name="person-outline" size={128} color={Colors.gray} />
       </View>
 
       {/* Número de depto */}
@@ -56,9 +56,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
     backgroundColor: Colors.lightGray,
     justifyContent: "center",
     alignItems: "center",
