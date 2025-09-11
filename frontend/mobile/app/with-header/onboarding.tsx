@@ -8,11 +8,11 @@ export default function Onboarding() {
     <View style={styles.container}>
       {/* Icono */}
       <Ionicons name="car-outline" size={200} color="#333" style={styles.icon} />
-
       {/* Título */}
       <Text style={styles.title}>
-        Reserva de estacionamientos de visita
+        Reserva de estacionamientos para visitantes
       </Text>
+
 
       {/* Subtítulo */}
       <Text style={styles.subtitle}>
@@ -61,7 +61,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
-    color: Colors.light,
+    color: Colors.white,
     fontSize: Typography.h2,
     fontWeight: "800",
   },
