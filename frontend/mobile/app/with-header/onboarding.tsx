@@ -24,7 +24,7 @@ export default function Onboarding() {
         style={styles.button}
         onPress={() => router.push("/with-header/availability")}
       >
-        <Text style={styles.buttonText}>Reservar →</Text>
+        <Text style={styles.buttonText}>Reservar</Text>
       </TouchableOpacity>
     </View>
   );
@@ -46,12 +46,12 @@ const styles = StyleSheet.create({
     textAlign: "center",
     width: '85%',
     marginBottom: 12,
-    color: "#000",
+    color: Colors.dark,
   },
   subtitle: {
     fontSize: Typography.h2,
     textAlign: "center",
-    color: "#555",
+    color: Colors.gray,
     marginBottom: 30,
   },
   button: {
@@ -61,8 +61,8 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
+    color: Colors.light,
+    fontSize: Typography.h2,
+    fontWeight: "800",
   },
 });
