@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from app.db import SessionLocal
-from app.models import Usuario
+from app.models import Conserje
 
-router = APIRouter()
+router = APIRouter(prefix="/conserjes", tags=["Conserjes"])
 
-# Dependencia: obtener sesión de BD
+# Dependencia para obtener sesión de BD
 def get_db():
     db = SessionLocal()
     try:
@@ -13,6 +13,6 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/usuarios")
-def listar_usuarios(db: Session = Depends(get_db)):
-    return db.query(Usuario).all()
+@router.get("/")
+def listar_conserjes(db: Session = Depends(get_db)):
+    return db.query(Conserje).all()
