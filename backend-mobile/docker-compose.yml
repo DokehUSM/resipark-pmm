@@ -1,9 +1,9 @@
 services:
-  backend-web:
-    container_name: backend-web-container
+  backend-mobile:
+    container_name: backend-mobile-container
     build: .
     ports:
-      - "8001:8000"
+      - "8002:8000"
     env_file:
       - .env
     volumes:

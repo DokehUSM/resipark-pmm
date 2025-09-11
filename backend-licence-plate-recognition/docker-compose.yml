@@ -1,0 +1,10 @@
+services:
+  backend-licence-plate-recognition:
+    container_name: backend-licence-plate-recognition-container
+    build: .
+    ports:
+      - "8003:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app
