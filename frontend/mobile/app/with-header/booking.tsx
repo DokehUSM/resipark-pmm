@@ -7,7 +7,13 @@ export default function Booking() {
   return (
     <View style={styles.container}>
       {/* Título */}
-      <Text style={styles.title}>Reserva</Text>
+      <View style={{flexDirection: 'row', alignItems: 'center', gap: 10,}}>
+      <TouchableOpacity onPress={() => router.push("/with-header/availability")}>
+        <Ionicons name="arrow-back-circle-outline" size={Typography.h1} color={Colors.gray} />
+      </TouchableOpacity>
+      <Text style={[styles.title]}>Reserva</Text>
+
+      </View>
 
       {/* Ícono central */}
       <Ionicons name="car-outline" size={120} color={Colors.dark} style={styles.icon} />
@@ -59,7 +65,6 @@ const styles = StyleSheet.create({
     fontSize: Typography.h1,
     fontWeight: "bold",
     color: Colors.dark,
-    marginBottom: 24,
   },
   icon: {
     alignSelf: "center",
