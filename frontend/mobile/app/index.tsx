@@ -5,7 +5,7 @@ export default function Login() {
   return (
     <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
       <Text style={{ fontSize: 20, marginBottom: 20 }}>Pantalla Login</Text>
-      <Button title="Ingresar" onPress={() => router.push("/onboarding")} />
+      <Button title="Ingresar" onPress={() => router.push("/with-header/onboarding")} />
     </View>
   );
 }
