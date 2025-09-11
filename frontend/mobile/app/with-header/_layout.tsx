@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import { View, Dimensions, StyleSheet } from "react-native";
 import Header from "../../components/Header";
+import { Colors, Typography } from "@/theme";
 
 const { width } = Dimensions.get("window");
 
@@ -18,6 +19,7 @@ export default function WithHeaderLayout() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: Colors.lightGray,
   },
   pageContent: {
     flex: 1,
