@@ -4,9 +4,10 @@ import { Colors, Typography } from "@/theme";
 type ParkingSlotProps = {
   name?: string;
   status?: "disponible" | "reservado" | "ocupado";
-  time?: string;            // opcional: p. ej. “18:30”
+  time?: string;
   isPlaceholder?: boolean;
   onPress?: () => void;
+  selected?: boolean; // ✅ nuevo
 };
 
 export default function ParkingSlot({
@@ -15,15 +16,23 @@ export default function ParkingSlot({
   time,
   isPlaceholder,
   onPress,
+  selected = false,
 }: ParkingSlotProps) {
   if (isPlaceholder) {
-    // Relleno invisible para completar la grilla
-    return <View style={[styles.card, { backgroundColor: "transparent", borderWidth: 0 }]} />;
+    // ✅ placeholder del mismo TAMAÑO que una tarjeta normal
+    return (
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: "transparent", borderWidth: 0 },
+        ]}
+        accessible={false}
+      />
+    );
   }
 
-  // Paleta por estado (usa warning si existe; si no, fallback ámbar)
+  // Paleta por estado
   const warning = (Colors as any).warning ?? "#F59E0B";
-
   const palette = {
     disponible: { border: Colors.primary, bg: Colors.light, text: Colors.dark },
     reservado:  { border: warning,        bg: Colors.lightGray, text: Colors.dark },
@@ -32,11 +41,12 @@ export default function ParkingSlot({
 
   const isAvailable = status === "disponible";
   const { border, bg, text } = palette[status];
+  const accent = (Colors as any).success ?? Colors.primary; // para seleccionado
 
-  // Subtítulo legible aunque no venga `time` del API
+  // Subtítulo
   const subtitle =
     status === "disponible"
-      ? time ? `Desde: ${time}` : "Libre ahora"
+      ? time ? `Desde: ${time}` : "Libre"
       : status === "reservado"
       ? time ? `Reservado hasta: ${time}` : "Reservado"
       : time ? `Ocupado hasta: ${time}` : "Ocupado";
@@ -49,10 +59,20 @@ export default function ParkingSlot({
         styles.card,
         { borderColor: border, backgroundColor: bg },
         !isAvailable && { opacity: 0.8 },
+        isAvailable && selected && {
+          borderColor: accent,
+          borderWidth: 3,
+          backgroundColor: Colors.white,
+          shadowColor: "#000",
+          shadowOpacity: 0.15,
+          shadowRadius: 6,
+          shadowOffset: { width: 0, height: 3 },
+          elevation: 3,
+        },
       ]}
       accessibilityRole="button"
-      accessibilityState={{ disabled: !isAvailable }}
-      accessibilityLabel={`${name} ${status}`}
+      accessibilityState={{ disabled: !isAvailable, selected: isAvailable ? selected : undefined }}
+      accessibilityLabel={`${name} ${status}${selected ? " seleccionado" : ""}`}
     >
       <Text style={[styles.name, { color: text }]}>{name}</Text>
       {!!subtitle && <Text style={[styles.time, { color: text }]}>{subtitle}</Text>}

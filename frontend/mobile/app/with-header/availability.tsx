@@ -8,22 +8,15 @@ import { fetchAvailability, AvailabilitySlot as ApiSlot } from "@/services/avail
 
 const numColumns = 3;
 
-// 1) Tipos claros
 type UISlot = {
   id: number;
   name: string;
   status: "disponible" | "reservado" | "ocupado";
 };
 
-type PlaceholderItem = {
-  __placeholder: true;     // discriminante
-  key: string;             // clave única para FlatList
-};
-
-// Unión que verá la FlatList
+type PlaceholderItem = { __placeholder: true; key: string };
 type ListItem = UISlot | PlaceholderItem;
 
-// 2) Mapear backend → UI
 function statusToUI(s: "libre" | "reservado" | "ocupado"): UISlot["status"] {
   return s === "libre" ? "disponible" : s;
 }
@@ -33,6 +26,9 @@ export default function Availability() {
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
+  // slot seleccionado (id o null)
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+
   const load = useCallback(async (opts?: { silent?: boolean }) => {
     if (!opts?.silent) setLoading(true);
     const res = await fetchAvailability();
@@ -41,22 +37,27 @@ export default function Availability() {
     if (!opts?.silent) setLoading(false);
   }, []);
 
-  useEffect(() => {
-    load();
-  }, [load]);
+  useEffect(() => { load(); }, [load]);
 
-  // 3) Adaptar datos para tu ParkingSlot
   const uiData: UISlot[] = useMemo(
     () =>
       slots.map((s) => ({
         id: s.id,
-        name: s.label,                // p.ej. "E-3"
-        status: statusToUI(s.status), // "disponible" | "reservado" | "ocupado"
+        name: s.label,
+        status: statusToUI(s.status),
       })),
     [slots]
   );
 
-  // 4) Agregar placeholders tipados con discriminante
+  // si el seleccionado dejó de estar disponible, limpiar selección
+  useEffect(() => {
+    if (selectedId == null) return;
+    const stillAvailable = uiData.some(
+      (s) => s.id === selectedId && s.status === "disponible"
+    );
+    if (!stillAvailable) setSelectedId(null);
+  }, [uiData, selectedId]);
+
   const listData: ListItem[] = useMemo(() => {
     const fullRows = Math.floor(uiData.length / numColumns);
     const missing = uiData.length - fullRows * numColumns;
@@ -68,7 +69,6 @@ export default function Availability() {
     return [...uiData, ...placeholders];
   }, [uiData]);
 
-  // 5) Cálculos de cabecera
   const totalSlots = uiData.length;
   const availableSlots = uiData.filter((s) => s.status === "disponible").length;
 
@@ -77,6 +77,8 @@ export default function Availability() {
     await load({ silent: true });
     setRefreshing(false);
   }, [load]);
+
+  const canReserve = selectedId != null;
 
   return (
     <View style={styles.container}>
@@ -98,16 +100,19 @@ export default function Availability() {
           }
           renderItem={({ item }) => {
             if ("__placeholder" in item) {
-              // celda invisible para completar la fila
-              return <View style={{ flex: 1, opacity: 0 }} />;
+              return <ParkingSlot isPlaceholder />;
             }
-            // item es UISlot aquí gracias al type guard
+            const isSelected = item.id === selectedId;
+            const isAvailable = item.status === "disponible";
             return (
               <ParkingSlot
                 name={item.name}
                 status={item.status}
-                // time: si luego expones reservado_hasta en el backend, pásalo aquí
-                isPlaceholder={false}
+                selected={isSelected}
+                onPress={() => {
+                  if (!isAvailable) return;
+                  setSelectedId((prev) => (prev === item.id ? null : item.id));
+                }}
               />
             );
           }}
@@ -115,12 +120,19 @@ export default function Availability() {
           persistentScrollbar
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           refreshing={loading && uiData.length === 0}
+          extraData={selectedId}
         />
       </View>
 
       {/* Botón Reservar */}
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.button} onPress={() => router.push("/with-header/booking")}>
+        <TouchableOpacity
+          style={[styles.button, !canReserve && styles.buttonDisabled]} 
+          disabled={!canReserve}
+          onPress={() => {
+            router.push({ pathname: "/with-header/booking", params: { slotId: String(selectedId) } });
+          }}
+        >
           <Text style={styles.buttonText}>Reservar →</Text>
         </TouchableOpacity>
       </View>
@@ -129,11 +141,40 @@ export default function Availability() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.lightGray },
-  header: { flex: 1.5, flexDirection: "row", alignItems: "center" },
-  title: { fontSize: Typography.h1, fontWeight: "bold", color: Colors.dark, marginLeft: 10 },
-  gridWrapper: { flex: 7 },
-  footer: { flex: 1.5, justifyContent: "center" },
-  button: { backgroundColor: Colors.primary, paddingVertical: 14, borderRadius: 6, alignItems: "center" },
-  buttonText: { color: Colors.white, fontSize: Typography.h2, fontWeight: "600" },
+  container: {
+    flex: 1,
+    backgroundColor: Colors.lightGray
+  },
+  header: {
+    flex: 1.5, flexDirection: "row",
+    alignItems: "center"
+  },
+  title: {
+    fontSize: Typography.h1,
+    fontWeight: "bold",
+    color: Colors.dark,
+    marginLeft: 10
+  },
+  gridWrapper: {
+    flex: 7
+  },
+  footer: {
+    flex: 1.5,
+    justifyContent: "center"
+  },
+  button: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 14,
+    borderRadius: 6,
+    alignItems: "center"
+  },
+  buttonDisabled: {
+    backgroundColor: Colors.gray,
+    opacity: 0.6
+  },
+  buttonText: {
+    color: Colors.white,
+    fontSize: Typography.h2,
+    fontWeight: "600"
+  },
 });
