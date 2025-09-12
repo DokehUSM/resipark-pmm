@@ -2,8 +2,16 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Colors, Typography } from "@/theme";
+import { useAuth } from "@/context/AuthContext"; // 👈
 
 export default function Account() {
+  const { departamento, logout } = useAuth(); // 👈 lee depto y cierra sesión
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/"); // vuelve al login
+  };
+
   return (
     <View style={styles.container}>
       {/* Título */}
@@ -15,23 +23,12 @@ export default function Account() {
       </View>
 
       {/* Número de depto */}
-      <Text style={styles.info}>Número de depto.: 1108A</Text>
+      <Text style={styles.info}>Número de depto.: {departamento ?? "—"}</Text>
 
-      {/* Botón Cerrar Sesión */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.replace("/")}
-      >
+      {/* Cerrar Sesión */}
+      <TouchableOpacity style={styles.button} onPress={handleLogout}>
         <Text style={styles.buttonText}>Cerrar Sesión</Text>
       </TouchableOpacity>
-
-      {/* Botón Soporte */}
-      {/* <TouchableOpacity
-        style={styles.button}
-        onPress={() => console.log("Ir a soporte")}
-      >
-        <Text style={styles.buttonText}>Soporte</Text>
-      </TouchableOpacity> */}
 
       {/* Link Cambiar contraseña */}
       <TouchableOpacity>
@@ -47,13 +44,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 24,
+    paddingHorizontal: 24
   },
   title: {
     fontSize: Typography.h1,
     fontWeight: "bold",
     color: Colors.dark,
-    marginBottom: 24,
+    marginBottom: 24
   },
   avatar: {
     width: 200,
@@ -62,12 +59,12 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.lightGray,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 24
   },
   info: {
     fontSize: Typography.h2,
     color: Colors.dark,
-    marginBottom: 32,
+    marginBottom: 32
   },
   button: {
     backgroundColor: Colors.primary,
@@ -75,17 +72,17 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignItems: "center",
     width: "100%",
-    marginBottom: 12,
+    marginBottom: 12
   },
   buttonText: {
     color: Colors.white,
     fontSize: Typography.h2,
-    fontWeight: "600",
+    fontWeight: "600"
   },
   link: {
     fontSize: Typography.small,
     color: Colors.accent,
     marginTop: 16,
-    textDecorationLine: "underline",
+    textDecorationLine: "underline"
   },
 });
