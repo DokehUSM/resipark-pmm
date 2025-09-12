@@ -235,3 +235,33 @@ def reservas_departamento(departamento: int, db: Session = Depends(get_db)):
     """)
     result = db.execute(query, {"dep": departamento}).mappings().all()
     return {"reservas": result}
+
+
+# --------------------
+# CREAR VEHÍCULO
+# --------------------
+class VehiculoVisitanteRequest(BaseModel):
+    placa_patente: str
+    rut: str
+
+@router.post("/vehiculos/visitante", status_code=201)
+def crear_vehiculo_visitante(payload: VehiculoVisitanteRequest, db: Session = Depends(get_db)):
+    # Asegura existencia en tabla base 'vehiculo' (FK)
+    db.execute(
+        text("INSERT INTO vehiculo (placa_patente) VALUES (:placa) ON CONFLICT DO NOTHING"),
+        {"placa": payload.placa_patente}
+    )
+
+    # Upsert en 'vehiculo_visitante'
+    db.execute(text("""
+        INSERT INTO vehiculo_visitante (placa_patente, rut)
+        VALUES (:placa, :rut)
+        ON CONFLICT (placa_patente) DO UPDATE SET
+            rut = EXCLUDED.rut
+    """), {
+        "placa": payload.placa_patente,
+        "rut": payload.rut
+    })
+
+    db.commit()
+    return {"message": "Vehículo visitante registrado", "placa": payload.placa_patente}
