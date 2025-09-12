@@ -2,10 +2,10 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Colors, Typography } from "@/theme";
-import { useAuth } from "@/context/AuthContext"; // 👈
+import { useAuth } from "@/context/AuthContext";
 
 export default function Account() {
-  const { departamento, logout } = useAuth(); // 👈 lee depto y cierra sesión
+  const { departamento, logout } = useAuth();
 
   const handleLogout = async () => {
     await logout();
