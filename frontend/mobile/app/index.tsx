@@ -1,9 +1,26 @@
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, Image } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Colors, Typography } from "@/theme";
+// fetch
+import { login } from "@/services/login";
 
 export default function Login() {
+
+  const [depto, setDepto] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleLogin = async () => {
+    try {
+      const data = await login(Number(depto), password);
+      console.log("Login exitoso", data);
+      router.replace("/with-header/onboarding"); // navegar tras login
+    } catch (e: any) {
+      console.error(e.message);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Encabezado */}
@@ -29,6 +46,8 @@ export default function Login() {
           style={styles.input}
           placeholder="1108A"
           placeholderTextColor={Colors.gray}
+          value={depto}
+          onChangeText={setDepto}
         />
       </View>
 
@@ -43,14 +62,13 @@ export default function Login() {
           secureTextEntry
           placeholder="********"
           placeholderTextColor={Colors.gray}
+          value={password}
+          onChangeText={setPassword}
         />
       </View>
 
       {/* Botón principal */}
-      <TouchableOpacity
-        style={styles.button}
-        onPress={() => router.push("/with-header/onboarding")}
-      >
+      <TouchableOpacity style={styles.button} onPress={handleLogin}>
         <Text style={styles.buttonText}>Ingresar</Text>
       </TouchableOpacity>
 
