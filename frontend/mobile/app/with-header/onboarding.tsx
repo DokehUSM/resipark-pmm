@@ -1,13 +1,68 @@
-import { View, Text, Button } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
+import { Typography, Colors } from "@/theme";
 
 export default function Onboarding() {
   return (
-    <View style={{ flex: 1 }}>
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <Text style={{ fontSize: 20, marginBottom: 20 }}>Pantalla Onboarding</Text>
-        <Button title="Ir a Disponibilidad" onPress={() => router.push("/with-header/availability")} />
-      </View>
+    <View style={styles.container}>
+      {/* Icono */}
+      <Ionicons name="car-outline" size={200} color="#333" style={styles.icon} />
+      {/* Título */}
+      <Text style={styles.title}>
+        Reserva de estacionamientos para visitantes
+      </Text>
+
+
+      {/* Subtítulo */}
+      <Text style={styles.subtitle}>
+        Consulta disponibilidad y gestiona fácilmente los espacios para tus visitas
+      </Text>
+
+      {/* Botón */}
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => router.push("/with-header/availability")}
+      >
+        <Text style={styles.buttonText}>Reservar</Text>
+      </TouchableOpacity>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: Colors.lightGray,
+  },
+  icon: {
+    marginBottom: 30,
+  },
+  title: {
+    fontSize: Typography.h1,
+    fontWeight: "bold",
+    textAlign: "center",
+    width: '85%',
+    marginBottom: 12,
+    color: Colors.dark,
+  },
+  subtitle: {
+    fontSize: Typography.h2,
+    textAlign: "center",
+    color: Colors.gray,
+    marginBottom: 30,
+  },
+  button: {
+    backgroundColor: Colors.primary, // aquí pon tu color primario del theme
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 8,
+  },
+  buttonText: {
+    color: Colors.white,
+    fontSize: Typography.h2,
+    fontWeight: "800",
+  },
+});

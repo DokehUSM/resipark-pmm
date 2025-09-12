@@ -1,10 +1,10 @@
 import { RFValue } from "react-native-responsive-fontsize";
 
 export const Typography = {
-  h1: RFValue(24, 812),   // 24px relativo al alto de referencia
+  h1: RFValue(28, 812),   // 24px relativo al alto de referencia
   h2: RFValue(20, 812),
-  body: RFValue(16, 812),
-  small: RFValue(14, 812),
+  body: RFValue(18, 812),
+  small: RFValue(16, 812),
 };
 
 export const Colors = {
@@ -19,4 +19,5 @@ export const Colors = {
   success: "#28a745",
   warning: "#ffc107",
   danger: "#dc3545",
+  white: '#fff'
 };
