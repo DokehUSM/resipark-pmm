@@ -22,7 +22,6 @@ export default function Booking() {
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
           Número de patente{" "}
-          <Ionicons name="help-circle-outline" size={16} color={Colors.gray} />
         </Text>
         <TextInput
           style={styles.input}
@@ -35,7 +34,6 @@ export default function Booking() {
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
           Hora de ingreso{" "}
-          <Ionicons name="help-circle-outline" size={16} color={Colors.gray} />
         </Text>
         <TextInput
           style={styles.input}

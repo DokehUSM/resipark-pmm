@@ -48,11 +48,6 @@ export default function Login() {
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
           Número de depto.
-          <Ionicons
-            name="help-circle-outline"
-            size={Typography.h2}
-            color={Colors.gray}
-          />
         </Text>
         <TextInput
           style={styles.input}
@@ -68,11 +63,6 @@ export default function Login() {
       <View style={styles.inputGroup}>
         <Text style={styles.label}>
           Contraseña
-          <Ionicons
-            name="help-circle-outline"
-            size={Typography.h2}
-            color={Colors.gray}
-          />
         </Text>
         <TextInput
           style={styles.input}

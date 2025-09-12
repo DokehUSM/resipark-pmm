@@ -133,7 +133,7 @@ export default function Availability() {
             router.push({ pathname: "/with-header/booking", params: { slotId: String(selectedId) } });
           }}
         >
-          <Text style={styles.buttonText}>Reservar →</Text>
+          <Text style={styles.buttonText}>Reservar</Text>
         </TouchableOpacity>
       </View>
     </View>
