@@ -26,22 +26,23 @@ class LoginRequest(BaseModel):
 @router.post("/login")
 def login(payload: LoginRequest, db: Session = Depends(get_db)):
     query = text("""
-        SELECT numero_departamento, hash_contrasena
+        SELECT numero_departamento
         FROM departamento
         WHERE numero_departamento = :num
+        AND crypt(:pwd, hash_contrasena) = hash_contrasena
     """)
-    result = db.execute(query, {"num": payload.numero_departamento}).fetchone()
+    result = db.execute(query, {
+        "num": payload.numero_departamento,
+        "pwd": payload.contrasena
+    }).fetchone()
 
     if not result:
-        raise HTTPException(status_code=404, detail="Departamento no encontrado")
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
-    check_query = text("SELECT crypt(:pwd, :hash) = :hash")
-    valid = db.execute(check_query, {"pwd": payload.contrasena, "hash": result.hash_contrasena}).scalar()
-
-    if not valid:
-        raise HTTPException(status_code=401, detail="Contraseña incorrecta")
-
-    return {"message": "Login exitoso", "departamento": payload.numero_departamento}
+    return {
+        "message": "Login exitoso",
+        "departamento": result.numero_departamento
+    }
 
 # --------------------
 # VEHÍCULOS RESIDENTES
@@ -87,28 +88,28 @@ class ReservaRequest(BaseModel):
     numero_departamento: int
     rut_conserje: str | None = None
 
-@router.post("/reservas")
-def crear_reserva(payload: ReservaRequest, db: Session = Depends(get_db)):
-    query = text("""
-        INSERT INTO reserva_estacionamiento 
-        (hora_reserva, hora_inicio, hora_termino, estado, placa_patente_visitante,
-         numero_estacionamiento, numero_departamento, rut_conserje)
-        VALUES (:res, :ini, :fin, :est, :placa, :estac, :dep, :rut)
-        RETURNING id_reserva
-    """)
-    result = db.execute(query, {
-        "res": payload.hora_reserva,
-        "ini": payload.hora_inicio,
-        "fin": payload.hora_termino,
-        "est": payload.estado,
-        "placa": payload.placa_patente_visitante,
-        "estac": payload.numero_estacionamiento,
-        "dep": payload.numero_departamento,
-        "rut": payload.rut_conserje
-    })
-    db.commit()
-    reserva_id = result.fetchone()[0]
-    return {"message": "Reserva creada", "id_reserva": reserva_id}
+# @router.post("/reservas")
+# def crear_reserva(payload: ReservaRequest, db: Session = Depends(get_db)):
+#     query = text("""
+#         INSERT INTO reserva_estacionamiento 
+#         (hora_reserva, hora_inicio, hora_termino, estado, placa_patente_visitante,
+#          numero_estacionamiento, numero_departamento, rut_conserje)
+#         VALUES (:res, :ini, :fin, :est, :placa, :estac, :dep, :rut)
+#         RETURNING id_reserva
+#     """)
+#     result = db.execute(query, {
+#         "res": payload.hora_reserva,
+#         "ini": payload.hora_inicio,
+#         "fin": payload.hora_termino,
+#         "est": payload.estado,
+#         "placa": payload.placa_patente_visitante,
+#         "estac": payload.numero_estacionamiento,
+#         "dep": payload.numero_departamento,
+#         "rut": payload.rut_conserje
+#     })
+#     db.commit()
+#     reserva_id = result.fetchone()[0]
+#     return {"message": "Reserva creada", "id_reserva": reserva_id}
 
 # --------------------
 # DISPONIBILIDAD
