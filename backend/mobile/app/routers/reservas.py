@@ -76,21 +76,32 @@ async def crear_reserva(req: ReservaRequest, token: dict = Depends(verify_token)
 async def listar_reservas(token: dict = Depends(verify_token)):
     """
     Listar todas las reservas de un residente autenticado.
-    - Se filtra por `id_departamento` obtenido del token JWT.
-    - Se muestran los datos del visitante y estado de la reserva.
+    - Si la reserva ya terminó y sigue marcada como 'activa',
+      se devuelve como 'vencida' (sin alterar la BD).
     """
     id_departamento = token["sub"]
     conn = await get_connection()
+
     rows = await conn.fetch("""
-        SELECT id, hora_inicio, hora_termino, estado_reserva,
-               rut_visitante, placa_patente_visitante
+        SELECT id,
+               hora_inicio,
+               hora_termino,
+               CASE
+                   WHEN hora_termino < NOW() AND estado_reserva = 0
+                        THEN 1  -- vencida
+                   ELSE estado_reserva
+               END AS estado_reserva,
+               rut_visitante,
+               placa_patente_visitante
         FROM reserva
         WHERE id_departamento = $1
         ORDER BY hora_inicio DESC
     """, id_departamento)
+
     await conn.close()
 
     return {"reservas": [dict(r) for r in rows]}
+
 
 # ------------------------
 # Editar reserva
