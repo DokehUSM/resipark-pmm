@@ -33,24 +33,54 @@ async def crear_reserva(req: ReservaRequest, token: dict = Depends(verify_token)
     """
     Crear una reserva para un visitante.
 
-    Reglas:
-    - La hora de término debe ser mayor que la de inicio.
-    - Se asocia siempre a un departamento (residente autenticado).
-    - Los datos del visitante (rut y placa) se guardan directamente en la tabla `reserva`.
+    Validaciones adicionales:
+    - No se permiten reservas si el total de estacionamientos está lleno
+      (ya sea por reservas activas o porque todos están ocupados).
     """
     id_departamento = token["sub"]
 
-    # Así guardas como "naive" en la BD, pero debes documentar que todos los clientes te envían UTC
+    # Normalizamos horas
     hora_inicio = req.hora_inicio.replace(tzinfo=None)
     hora_termino = req.hora_termino.replace(tzinfo=None)
 
     if hora_termino <= hora_inicio:
-        raise HTTPException(
-            status_code=400,
-            detail="La hora de término debe ser posterior a la de inicio"
-        )
+        raise HTTPException(status_code=400, detail="La hora de término debe ser posterior a la de inicio")
 
     conn = await get_connection()
+
+    # 1. Número total de estacionamientos
+    estacionamientos_totales = await conn.fetchval("SELECT COUNT(*) FROM estacionamiento")
+
+    # 2. Cantidad de reservas activas (vigentes)
+    reservas_activas = await conn.fetchval("""
+        SELECT COUNT(*) 
+        FROM reserva
+        WHERE estado_reserva = 0
+        AND hora_termino > NOW()
+    """)
+
+    # 3. Cantidad de estacionamientos ocupados actualmente
+    ocupados = await conn.fetchval("""
+        WITH ultimos_eventos AS (
+            SELECT DISTINCT ON (numero_estacionamiento)
+                   numero_estacionamiento, tipo, hora
+            FROM registro_evento_estacionamiento
+            ORDER BY numero_estacionamiento, hora DESC
+        )
+        SELECT COUNT(*) FROM ultimos_eventos
+        WHERE tipo = 0  -- ocupado
+    """)
+
+    # 4. Validación
+    if reservas_activas >= estacionamientos_totales:
+        await conn.close()
+        raise HTTPException(status_code=400, detail="No se pueden crear más reservas: todos los estacionamientos ya están reservados")
+
+    if ocupados >= estacionamientos_totales:
+        await conn.close()
+        raise HTTPException(status_code=400, detail="No se pueden crear reservas: todos los estacionamientos están ocupados")
+
+    # 5. Crear la reserva
     row = await conn.fetchrow("""
         INSERT INTO reserva (
             hora_inicio, hora_termino, estado_reserva,
@@ -58,8 +88,8 @@ async def crear_reserva(req: ReservaRequest, token: dict = Depends(verify_token)
         )
         VALUES ($1, $2, 0, $3, $4, $5)
         RETURNING id;
-    """, hora_inicio, hora_termino,
-         req.rut_visitante, req.placa_patente_visitante, id_departamento)
+    """, hora_inicio, hora_termino, req.rut_visitante, req.placa_patente_visitante, id_departamento)
+
     await conn.close()
 
     return {
@@ -67,7 +97,6 @@ async def crear_reserva(req: ReservaRequest, token: dict = Depends(verify_token)
         "id_reserva": row["id"],
         "estado": "activa"
     }
-
 
 # ------------------------
 # Listar reservas
