@@ -10,16 +10,25 @@ router = APIRouter(prefix="/vehiculos", tags=["Vehículos"])
 # ------------------------
 class VehiculoRequest(BaseModel):
     placa_patente: str
-    tipo_vehiculo: int   # ej: 1 = residente, 2 = visitante
+    tipo_vehiculo: int   # Ejemplo: 1 = auto, 2 = camioneta, 3 = taxi, etc.
 
 class UpdateVehiculoRequest(BaseModel):
-    tipo_vehiculo: int
+    tipo_vehiculo: int   # Solo se puede actualizar el tipo de vehículo
 
 # ------------------------
 # Crear vehículo
 # ------------------------
 @router.post("/", status_code=201)
-async def add_vehiculo(req: VehiculoRequest, token: dict = Depends(verify_token)):
+async def agregar_vehiculo(req: VehiculoRequest, token: dict = Depends(verify_token)):
+    """
+    Crea o actualiza un vehículo asociado al residente autenticado.
+    
+    - El `id_departamento` se obtiene desde el token JWT (sub).
+    - Si la placa ya existe en la BD, se actualiza su `tipo_vehiculo` y se asegura 
+      que quede asociado al departamento del usuario logueado.
+    - Los códigos de `tipo_vehiculo` corresponden a una clasificación definida 
+      (ej: 1 = auto, 2 = camioneta, 3 = taxi, ...).
+    """
     id_departamento = token["sub"]
 
     conn = await get_connection()
@@ -40,7 +49,14 @@ async def add_vehiculo(req: VehiculoRequest, token: dict = Depends(verify_token)
 # Listar vehículos del residente
 # ------------------------
 @router.get("/")
-async def list_vehiculos(token: dict = Depends(verify_token)):
+async def listar_vehiculos(token: dict = Depends(verify_token)):
+    """
+    Devuelve todos los vehículos asociados al residente autenticado.
+    
+    - El sistema filtra por `id_departamento` para que un usuario solo 
+      pueda ver sus propios vehículos.
+    - Se devuelve una lista de objetos con `placa_patente` y `tipo_vehiculo`.
+    """
     id_departamento = token["sub"]
 
     conn = await get_connection()
@@ -60,7 +76,15 @@ async def list_vehiculos(token: dict = Depends(verify_token)):
 # Editar vehículo
 # ------------------------
 @router.put("/{placa}")
-async def update_vehiculo(placa: str, req: UpdateVehiculoRequest, token: dict = Depends(verify_token)):
+async def actualizar_vehiculo(placa: str, req: UpdateVehiculoRequest, token: dict = Depends(verify_token)):
+    """
+    Actualiza el tipo de vehículo de una placa registrada por el residente autenticado.
+    
+    - Solo se puede modificar el `tipo_vehiculo`.
+    - La query valida que la placa pertenezca al `id_departamento` del usuario 
+      para evitar modificar autos de otros residentes.
+    - Si no existe el vehículo, devuelve 404.
+    """
     id_departamento = token["sub"]
 
     conn = await get_connection()
@@ -73,7 +97,7 @@ async def update_vehiculo(placa: str, req: UpdateVehiculoRequest, token: dict = 
     finally:
         await conn.close()
 
-    if result.endswith("0"):  # No rows affected
+    if result.endswith("0"):  # Ninguna fila afectada
         raise HTTPException(status_code=404, detail="Vehículo no encontrado")
 
     return {"mensaje": "Vehículo actualizado", "placa": placa}
@@ -82,7 +106,13 @@ async def update_vehiculo(placa: str, req: UpdateVehiculoRequest, token: dict = 
 # Eliminar vehículo
 # ------------------------
 @router.delete("/{placa}")
-async def delete_vehiculo(placa: str, token: dict = Depends(verify_token)):
+async def eliminar_vehiculo(placa: str, token: dict = Depends(verify_token)):
+    """
+    Elimina un vehículo del residente autenticado.
+    
+    - Solo se permite eliminar vehículos que pertenezcan al `id_departamento` del usuario.
+    - Si la placa no existe o no corresponde al residente, devuelve 404.
+    """
     id_departamento = token["sub"]
 
     conn = await get_connection()
@@ -94,7 +124,7 @@ async def delete_vehiculo(placa: str, token: dict = Depends(verify_token)):
     finally:
         await conn.close()
 
-    if result.endswith("0"):  # No rows affected
+    if result.endswith("0"):  # Ninguna fila afectada
         raise HTTPException(status_code=404, detail="Vehículo no encontrado")
 
     return {"mensaje": "Vehículo eliminado", "placa": placa}
