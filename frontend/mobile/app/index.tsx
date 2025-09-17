@@ -32,7 +32,7 @@ export default function Login() {
     // ✅ pasar departamento y access_token al contexto
     await login(result.data.departamento, result.data.access_token);
 
-    router.replace("/with-header/onboarding");
+    router.replace("/with-header/home");
     console.log("Se ha iniciado la sesión");
   };
 
