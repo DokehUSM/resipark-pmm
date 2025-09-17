@@ -6,7 +6,7 @@ app = FastAPI(title="Backend Mobile API")
 app.include_router(auth.router)
 app.include_router(vehiculos.router)
 app.include_router(reservas.router)
-# app.include_router(estacionamientos.router)
+app.include_router(estacionamientos.router)
 # app.include_router(historial.router)
 
 @app.get("/")
