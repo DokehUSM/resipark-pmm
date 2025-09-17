@@ -76,26 +76,31 @@ async def crear_reserva(req: ReservaRequest, token: dict = Depends(verify_token)
 async def listar_reservas(token: dict = Depends(verify_token)):
     """
     Listar todas las reservas de un residente autenticado.
-    - Si la reserva ya terminó y sigue marcada como 'activa',
-      se devuelve como 'vencida' (sin alterar la BD).
+
+    Mejoras:
+    - Devuelve el estado como texto (ej: 'Activa', 'Vencida', 'Cancelada').
+    - Aplica "lazy update": si la reserva ya terminó y aún está como 'Activa',
+      se devuelve como 'Vencida' en la respuesta (sin modificar la BD).
     """
     id_departamento = token["sub"]
     conn = await get_connection()
 
     rows = await conn.fetch("""
-        SELECT id,
-               hora_inicio,
-               hora_termino,
+        SELECT r.id,
+               r.hora_inicio,
+               r.hora_termino,
+               -- Lazy update: si terminó y sigue activa => vencida
                CASE
-                   WHEN hora_termino < NOW() AND estado_reserva = 0
-                        THEN 1  -- vencida
-                   ELSE estado_reserva
+                   WHEN r.hora_termino < NOW() AND r.estado_reserva = 0
+                        THEN 'Vencida'
+                   ELSE e.nombre
                END AS estado_reserva,
-               rut_visitante,
-               placa_patente_visitante
-        FROM reserva
-        WHERE id_departamento = $1
-        ORDER BY hora_inicio DESC
+               r.rut_visitante,
+               r.placa_patente_visitante
+        FROM reserva r
+        JOIN estado_reserva e ON e.id = r.estado_reserva
+        WHERE r.id_departamento = $1
+        ORDER BY r.hora_inicio DESC
     """, id_departamento)
 
     await conn.close()
