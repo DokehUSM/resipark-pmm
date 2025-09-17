@@ -8,7 +8,6 @@ import {
   Image,
   Alert,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { Colors, Typography } from "@/theme";
 import { login as loginApi } from "@/services/login";
@@ -21,13 +20,18 @@ export default function Login() {
   const isDisabled = !depto.trim() || !password.trim();
 
   const handleLogin = async () => {
-    const result = await loginApi(parseInt(depto, 10), password);
+    // ✅ mandar depto como string (sin parseInt)
+    const result = await loginApi(depto.trim(), password);
+
     if (!result.ok) {
       Alert.alert("No pudimos iniciar sesión", result.error);
       console.log("No se pudo iniciar sesión");
       return;
     }
-    await login(result.data.departamento);
+
+    // ✅ pasar departamento y access_token al contexto
+    await login(result.data.departamento, result.data.access_token);
+
     router.replace("/with-header/onboarding");
     console.log("Se ha iniciado la sesión");
   };
@@ -46,13 +50,11 @@ export default function Login() {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>
-          Número de depto.
-        </Text>
+        <Text style={styles.label}>Número de depto.</Text>
         <TextInput
           style={styles.input}
           placeholder="1108"
-          keyboardType="number-pad"
+          keyboardType="default"
           placeholderTextColor={Colors.gray}
           value={depto}
           onChangeText={setDepto}
@@ -61,9 +63,7 @@ export default function Login() {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>
-          Contraseña
-        </Text>
+        <Text style={styles.label}>Contraseña</Text>
         <TextInput
           style={styles.input}
           secureTextEntry

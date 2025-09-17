@@ -1,20 +1,20 @@
 // services/login.ts
 import { API_URL } from "@/config/api";
 
-export type LoginResponse = { message: string; departamento: number };
+export type LoginResponse = { access_token: string; token_type: "bearer"; departamento: string };
 export type LoginResult =
   | { ok: true; data: LoginResponse }
   | { ok: false; error: string };
 
 export async function login(
-  numero_departamento: number,
+  id_departamento: string,
   contrasena: string
 ): Promise<LoginResult> {
   try {
-    const res = await fetch(`${API_URL}/login`, {
+    const res = await fetch(`${API_URL}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ numero_departamento, contrasena }),
+      body: JSON.stringify({ id_departamento, contrasena }),
     });
 
     let json: any = {};
