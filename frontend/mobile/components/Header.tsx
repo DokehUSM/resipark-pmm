@@ -14,7 +14,6 @@ const TITLES: Record<string, string> = {
 
 export default function Header() {
   const pathname = usePathname();
-  const canGoBack = router.canGoBack();
 
   const title = useMemo(() => {
     if (pathname && TITLES[pathname]) return TITLES[pathname];
@@ -24,19 +23,22 @@ export default function Header() {
     return last.charAt(0).toUpperCase() + last.slice(1);
   }, [pathname]);
 
+  const isHome = pathname === "/with-header/home";
+
   return (
     <SafeAreaView edges={["top"]} style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.side}>
-          {canGoBack ? (
+          {!isHome && (
             <Pressable
-              onPress={() => router.back()}
+              onPress={() => router.replace("/with-header/home")}
               accessibilityRole="button"
-              accessibilityLabel="Volver"
+              accessibilityLabel="Volver a inicio"
+              style={styles.backButton}
             >
               <Ionicons name="chevron-back" size={26} color={Colors.dark} />
             </Pressable>
-          ) : null}
+          )}
         </View>
 
         <View style={styles.titleWrapper}>
@@ -78,6 +80,13 @@ const styles = StyleSheet.create({
   },
   sideRight: {
     alignItems: "flex-end",
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
   },
   titleWrapper: {
     flex: 1,
