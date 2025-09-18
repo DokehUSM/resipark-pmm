@@ -20,7 +20,7 @@ function goTo(path: Href) {
 
 export default function Home() {
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={styles.container}>
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Reserva de estacionamientos</Text>
 
@@ -78,7 +78,7 @@ export default function Home() {
           <Text style={styles.actionButtonText}>Anular reservas</Text>
         </TouchableOpacity>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
@@ -86,10 +86,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.lightGray,
-  },
-  content: {
     padding: 24,
     paddingBottom: 40,
+    justifyContent: 'center'
   },
   card: {
     backgroundColor: Colors.white,
