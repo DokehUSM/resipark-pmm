@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { router, Href } from "expo-router";
 import { Colors, Typography } from "@/theme";
 
 const AVAILABILITY = [
@@ -13,11 +14,13 @@ const MOCK_RESERVATIONS = [
   { plate: "UHGT73", time: "19:43 - 21:43", rut: "12.345.678-9" },
 ];
 
+function goTo(path: Href) {
+  return () => router.push(path);
+}
+
 export default function Home() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Text style={styles.screenTitle}>Inicio</Text>
-
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Reserva de estacionamientos</Text>
 
@@ -41,7 +44,12 @@ export default function Home() {
           </View>
         </View>
 
-        <TouchableOpacity style={[styles.actionButton, styles.reserveButton]} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.reserveButton]}
+          onPress={() => router.push("/with-header/booking")}
+          accessibilityRole="button"
+          accessibilityLabel="Ir a reservar estacionamientos"
+        >
           <Text style={styles.actionButtonText}>Reservar</Text>
         </TouchableOpacity>
       </View>
@@ -61,7 +69,12 @@ export default function Home() {
           ))}
         </View>
 
-        <TouchableOpacity style={[styles.actionButton, styles.cancelButton]} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={[styles.actionButton, styles.cancelButton]}
+          onPress={() => router.push("/with-header/account")}
+          accessibilityRole="button"
+          accessibilityLabel="Ir a anular reservas"
+        >
           <Text style={styles.actionButtonText}>Anular reservas</Text>
         </TouchableOpacity>
       </View>
@@ -77,12 +90,6 @@ const styles = StyleSheet.create({
   content: {
     padding: 24,
     paddingBottom: 40,
-  },
-  screenTitle: {
-    fontSize: Typography.h1,
-    fontWeight: "700",
-    color: Colors.dark,
-    marginBottom: 16,
   },
   card: {
     backgroundColor: Colors.white,
