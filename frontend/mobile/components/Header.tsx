@@ -10,6 +10,7 @@ const TITLES: Record<string, string> = {
   "/with-header/availability": "Disponibilidad",
   "/with-header/booking": "Reservar",
   "/with-header/account": "Cuenta",
+  "/with-header/cancelBookings": "Anular Reservas",
 };
 
 export default function Header() {

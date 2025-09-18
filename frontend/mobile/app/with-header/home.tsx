@@ -71,7 +71,7 @@ export default function Home() {
 
         <TouchableOpacity
           style={[styles.actionButton, styles.cancelButton]}
-          onPress={() => router.push("/with-header/account")}
+          onPress={() => router.push("/with-header/cancelBookings")}
           accessibilityRole="button"
           accessibilityLabel="Ir a anular reservas"
         >
