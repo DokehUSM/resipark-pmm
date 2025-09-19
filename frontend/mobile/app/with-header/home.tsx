@@ -1,7 +1,8 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
 import { router, Href } from "expo-router";
 import { Colors, Typography } from "@/theme";
+import Svg, { Path, Text as SvgText } from "react-native-svg";
 
 const AVAILABILITY = [
   { label: "disponibles", value: 7, color: Colors.success },
@@ -18,7 +19,46 @@ function goTo(path: Href) {
   return () => router.push(path);
 }
 
+function createPiePaths(data: typeof AVAILABILITY, radius: number, startAngleOffset = -Math.PI / 2) {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  let startAngle = startAngleOffset;
+  return data.map((slice) => {
+    const angle = (slice.value / total) * Math.PI * 2;
+    const endAngle = startAngle + angle;
+
+    const x1 = radius + radius * Math.cos(startAngle);
+    const y1 = radius + radius * Math.sin(startAngle);
+    const x2 = radius + radius * Math.cos(endAngle);
+    const y2 = radius + radius * Math.sin(endAngle);
+
+    const largeArcFlag = angle > Math.PI ? 1 : 0;
+
+    const pathData = [
+      `M${radius},${radius}`,
+      `L${x1},${y1}`,
+      `A${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2}`,
+      "Z",
+    ].join(" ");
+
+    // posición de etiqueta (mitad del arco)
+    const midAngle = (startAngle + endAngle) / 2;
+    const labelRadius = radius * 0.6; // más cerca del centro
+    const labelX = radius + labelRadius * Math.cos(midAngle);
+    const labelY = radius + labelRadius * Math.sin(midAngle);
+
+    const percent = Math.round((slice.value / total) * 100);
+
+    startAngle = endAngle;
+    return { path: pathData, color: slice.color, percent, labelX, labelY };
+  });
+}
+
+
 export default function Home() {
+  const size = 120; // tamaño del gráfico
+  const radius = size / 2;
+  const paths = createPiePaths(AVAILABILITY, radius);
+
   return (
     <View style={styles.container}>
       <View style={styles.card}>
@@ -39,16 +79,33 @@ export default function Home() {
             ))}
           </View>
 
-          <View style={styles.chartPlaceholder}>
-            <View style={styles.chartSlice} />
+          {/*Pie chart con react-native-svg */}
+          <View style={styles.chartWrapper}>
+            <Svg width={size} height={size}>
+              {paths.map((slice, i) => (
+                <React.Fragment key={i}>
+                  <Path d={slice.path} fill={slice.color} />
+                  <SvgText
+                    x={slice.labelX}
+                    y={slice.labelY}
+                    fill="#fff"
+                    fontSize="12"
+                    fontWeight="bold"
+                    textAnchor="middle"
+                    alignmentBaseline="middle"
+                  >
+                    {slice.percent}%
+                  </SvgText>
+                </React.Fragment>
+              ))}
+            </Svg>
+
           </View>
         </View>
 
         <TouchableOpacity
           style={[styles.actionButton, styles.reserveButton]}
-          onPress={() => router.push("/with-header/booking")}
-          accessibilityRole="button"
-          accessibilityLabel="Ir a reservar estacionamientos"
+          onPress={goTo("/with-header/booking")}
         >
           <Text style={styles.actionButtonText}>Reservar</Text>
         </TouchableOpacity>
@@ -71,7 +128,7 @@ export default function Home() {
 
         <TouchableOpacity
           style={[styles.actionButton, styles.cancelButton]}
-          onPress={() => router.push("/with-header/cancelBookings")}
+          onPress={goTo("/with-header/cancelBookings")}
           accessibilityRole="button"
           accessibilityLabel="Ir a anular reservas"
         >
@@ -82,13 +139,14 @@ export default function Home() {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.lightGray,
     padding: 24,
     paddingBottom: 40,
-    justifyContent: 'center'
+    justifyContent: "center",
   },
   card: {
     backgroundColor: Colors.white,
@@ -115,6 +173,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 20,
   },
+  chartWrapper: {
+    width: '50%',
+    height: 160,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   statusRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -139,25 +203,6 @@ const styles = StyleSheet.create({
   statusLabel: {
     fontSize: Typography.body,
     color: Colors.gray,
-  },
-  chartPlaceholder: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    borderWidth: 2,
-    borderColor: Colors.lightGray,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  chartSlice: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    borderWidth: 2,
-    borderColor: Colors.gray,
-    borderRightColor: "transparent",
-    borderBottomColor: "transparent",
-    transform: [{ rotate: "-45deg" }],
   },
   actionButton: {
     borderRadius: 8,
@@ -212,3 +257,5 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
 });
+
+
