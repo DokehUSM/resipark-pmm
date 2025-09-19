@@ -40,8 +40,8 @@ async def crear_reserva(req: ReservaRequest, token: dict = Depends(verify_token)
     id_departamento = token["sub"]
 
     # Normalizamos horas
-    hora_inicio = req.hora_inicio.replace(tzinfo=None)
-    hora_termino = req.hora_termino.replace(tzinfo=None)
+    hora_inicio = req.hora_inicio
+    hora_termino = req.hora_termino
 
     if hora_termino <= hora_inicio:
         raise HTTPException(status_code=400, detail="La hora de término debe ser posterior a la de inicio")
@@ -171,8 +171,8 @@ async def editar_reserva(
 
     # Normalizamos timestamps a naive (UTC asumido).
     # Esto evita conflictos si los clientes envían `2025-09-17T08:00:00Z`.
-    hora_inicio = req.hora_inicio.replace(tzinfo=None)
-    hora_termino = req.hora_termino.replace(tzinfo=None)
+    hora_inicio = req.hora_inicio
+    hora_termino = req.hora_termino
 
     # ------------------------
     # Conexión a la base de datos y actualización
