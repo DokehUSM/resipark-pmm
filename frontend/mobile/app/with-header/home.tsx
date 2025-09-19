@@ -325,7 +325,7 @@ export default function Home() {
           accessibilityRole="button"
           accessibilityLabel="Ir a anular reservas"
         >
-          <Text style={styles.actionButtonText}>Ver mis reservas /activas)</Text>
+          <Text style={styles.actionButtonText}>Ver reservas activas</Text>
         </TouchableOpacity>
       </View>
     </View>
