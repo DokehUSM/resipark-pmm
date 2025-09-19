@@ -38,3 +38,47 @@ export async function fetchAvailability(): Promise<
     return { ok: false, error: e?.message ?? "Error de red" };
   }
 }
+
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? API_URL;
+
+export type AvailabilityTotals = {
+  total: number;
+  disponibles: number;
+  reservados: number;
+  ocupados: number;
+};
+
+export async function fetchAvailabilityTotals(token: string | null): Promise<
+  { ok: true; data: AvailabilityTotals } | { ok: false; error: string }
+> {
+  if (!token) {
+    return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/estacionamientos/disponibilidad`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    const json: any = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const msg = typeof json?.detail === "string" ? json.detail : "No se pudo obtener la disponibilidad";
+      return { ok: false, error: msg };
+    }
+
+    const data: AvailabilityTotals = {
+      total: Number(json?.total ?? 0),
+      disponibles: Number(json?.disponibles ?? 0),
+      reservados: Number(json?.reservados ?? 0),
+      ocupados: Number(json?.ocupados ?? 0),
+    };
+
+    return { ok: true, data };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? "Error de red" };
+  }
+}

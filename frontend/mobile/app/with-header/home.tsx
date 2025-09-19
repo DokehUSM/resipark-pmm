@@ -1,63 +1,230 @@
-import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from "react-native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from "react-native";
 import { router, Href } from "expo-router";
 import { Colors, Typography } from "@/theme";
 import Svg, { Path, Text as SvgText } from "react-native-svg";
-
-const AVAILABILITY = [
-  { label: "disponibles", value: 7, color: Colors.success },
-  { label: "reservados", value: 2, color: Colors.warning },
-  { label: "ocupados", value: 3, color: Colors.danger },
-];
-
-const MOCK_RESERVATIONS = [
-  { plate: "LMNN77", time: "19:42 - 21:42", rut: "20.109.691-K" },
-  { plate: "UHGT73", time: "19:43 - 21:43", rut: "12.345.678-9" },
-];
+import { fetchAvailabilityTotals } from "@/services/availability";
+import { listarReservas, Reserva } from "@/services/reservas";
+import { useAuth } from "@/context/AuthContext";
 
 function goTo(path: Href) {
   return () => router.push(path);
 }
 
-function createPiePaths(data: typeof AVAILABILITY, radius: number, startAngleOffset = -Math.PI / 2) {
+type StatusKey = "libre" | "reservado" | "ocupado";
+type AvailabilitySlice = { label: string; value: number; color: string };
+
+type PieSegment = {
+  path: string;
+  color: string;
+  percent: number;
+  labelX: number;
+  labelY: number;
+};
+
+type ActiveReserva = {
+  id: number;
+  placa: string;
+  rut: string;
+  horario: string;
+};
+
+const INITIAL_COUNTS: Record<StatusKey, number> = {
+  libre: 0,
+  reservado: 0,
+  ocupado: 0,
+};
+
+const STATUS_LABELS: Record<StatusKey, string> = {
+  libre: "disponibles",
+  reservado: "reservados",
+  ocupado: "ocupados",
+};
+
+const STATUS_COLORS: Record<StatusKey, string> = {
+  libre: Colors.success,
+  reservado: Colors.warning,
+  ocupado: Colors.danger,
+};
+
+const hasIntl = typeof Intl !== "undefined" && typeof Intl.DateTimeFormat === "function";
+
+function pad(value: number) {
+  return value.toString().padStart(2, "0");
+}
+
+function formatHorario(horaInicio: string, horaTermino: string) {
+  const start = new Date(horaInicio);
+  const end = new Date(horaTermino);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return `${horaInicio} - ${horaTermino}`;
+  }
+
+  if (!hasIntl) {
+    const startText = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+    const endText = `${pad(end.getHours())}:${pad(end.getMinutes())}`;
+    return `${startText} - ${endText}`;
+  }
+
+  const formatter = new Intl.DateTimeFormat("es-CL", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  return `${formatter.format(start)} - ${formatter.format(end)}`;
+}
+
+function createPiePaths(
+  data: AvailabilitySlice[],
+  radius: number,
+  startAngleOffset = -Math.PI / 2
+): PieSegment[] {
   const total = data.reduce((sum, item) => sum + item.value, 0);
+  if (total <= 0) return [];
+
   let startAngle = startAngleOffset;
-  return data.map((slice) => {
+  const segments: PieSegment[] = [];
+
+  data.forEach((slice) => {
     const angle = (slice.value / total) * Math.PI * 2;
     const endAngle = startAngle + angle;
 
-    const x1 = radius + radius * Math.cos(startAngle);
-    const y1 = radius + radius * Math.sin(startAngle);
-    const x2 = radius + radius * Math.cos(endAngle);
-    const y2 = radius + radius * Math.sin(endAngle);
+    if (slice.value > 0) {
+      const x1 = radius + radius * Math.cos(startAngle);
+      const y1 = radius + radius * Math.sin(startAngle);
+      const x2 = radius + radius * Math.cos(endAngle);
+      const y2 = radius + radius * Math.sin(endAngle);
 
-    const largeArcFlag = angle > Math.PI ? 1 : 0;
+      const largeArcFlag = angle > Math.PI ? 1 : 0;
 
-    const pathData = [
-      `M${radius},${radius}`,
-      `L${x1},${y1}`,
-      `A${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2}`,
-      "Z",
-    ].join(" ");
+      const pathData = [
+        `M${radius},${radius}`,
+        `L${x1},${y1}`,
+        `A${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2}`,
+        "Z",
+      ].join(" ");
 
-    // posición de etiqueta (mitad del arco)
-    const midAngle = (startAngle + endAngle) / 2;
-    const labelRadius = radius * 0.6; // más cerca del centro
-    const labelX = radius + labelRadius * Math.cos(midAngle);
-    const labelY = radius + labelRadius * Math.sin(midAngle);
+      const midAngle = (startAngle + endAngle) / 2;
+      const labelRadius = radius * 0.6;
+      const labelX = radius + labelRadius * Math.cos(midAngle);
+      const labelY = radius + labelRadius * Math.sin(midAngle);
 
-    const percent = Math.round((slice.value / total) * 100);
+      const percent = Math.round((slice.value / total) * 100);
+
+      segments.push({ path: pathData, color: slice.color, percent, labelX, labelY });
+    }
 
     startAngle = endAngle;
-    return { path: pathData, color: slice.color, percent, labelX, labelY };
   });
+
+  return segments;
 }
 
+function toActiveReservas(reservas: Reserva[]): ActiveReserva[] {
+  return reservas
+    .filter((item) => item.estado_reserva?.toLowerCase() === "activa")
+    .map((item) => ({
+      id: item.id,
+      placa: item.placa_patente_visitante,
+      rut: item.rut_visitante,
+      horario: formatHorario(item.hora_inicio, item.hora_termino),
+    }));
+}
 
 export default function Home() {
-  const size = 120; // tamaño del gráfico
+  const size = 120;
   const radius = size / 2;
-  const paths = createPiePaths(AVAILABILITY, radius);
+  const { token } = useAuth();
+
+  const [availabilityCounts, setAvailabilityCounts] = useState<Record<StatusKey, number>>(INITIAL_COUNTS);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [reservas, setReservas] = useState<Reserva[]>([]);
+  const [reservasLoading, setReservasLoading] = useState(false);
+
+  const loadAvailability = useCallback(async () => {
+    if (!token) {
+      setAvailabilityCounts({ ...INITIAL_COUNTS });
+      return;
+    }
+
+    setAvailabilityLoading(true);
+    const res = await fetchAvailabilityTotals(token);
+    if (res.ok) {
+      const counts: Record<StatusKey, number> = { ...INITIAL_COUNTS };
+      counts.libre = Math.max(res.data.disponibles, 0);
+      counts.reservado = Math.max(res.data.reservados, 0);
+      counts.ocupado = Math.max(res.data.ocupados, 0);
+      setAvailabilityCounts(counts);
+    } else {
+      Alert.alert("No pudimos obtener la disponibilidad", res.error);
+    }
+    setAvailabilityLoading(false);
+  }, [token]);
+
+  const loadReservas = useCallback(async () => {
+    if (!token) {
+      setReservas([]);
+      return;
+    }
+
+    setReservasLoading(true);
+    const res = await listarReservas(token);
+    if (res.ok) {
+      setReservas(res.data);
+    } else {
+      Alert.alert("No pudimos obtener tus reservas", res.error);
+    }
+    setReservasLoading(false);
+  }, [token]);
+
+  useEffect(() => {
+    loadAvailability();
+  }, [loadAvailability]);
+
+  useEffect(() => {
+    loadReservas();
+  }, [loadReservas]);
+
+  const availabilityData = useMemo<AvailabilitySlice[]>(
+    () => [
+      {
+        label: STATUS_LABELS.libre,
+        value: availabilityCounts.libre,
+        color: STATUS_COLORS.libre,
+      },
+      {
+        label: STATUS_LABELS.reservado,
+        value: availabilityCounts.reservado,
+        color: STATUS_COLORS.reservado,
+      },
+      {
+        label: STATUS_LABELS.ocupado,
+        value: availabilityCounts.ocupado,
+        color: STATUS_COLORS.ocupado,
+      },
+    ],
+    [availabilityCounts]
+  );
+
+  const totalSlots = useMemo(
+    () => availabilityData.reduce((sum, slice) => sum + slice.value, 0),
+    [availabilityData]
+  );
+
+  const paths = useMemo(
+    () => (totalSlots > 0 ? createPiePaths(availabilityData, radius) : []),
+    [availabilityData, radius, totalSlots]
+  );
+
+  const activeReservas = useMemo(() => toActiveReservas(reservas), [reservas]);
 
   return (
     <View style={styles.container}>
@@ -66,7 +233,7 @@ export default function Home() {
 
         <View style={styles.cardBody}>
           <View>
-            {AVAILABILITY.map((item, index) => (
+            {availabilityData.map((item, index) => (
               <View
                 key={item.label}
                 style={[styles.statusRow, index > 0 && styles.statusRowSpacing]}
@@ -79,27 +246,40 @@ export default function Home() {
             ))}
           </View>
 
-          {/*Pie chart con react-native-svg */}
           <View style={styles.chartWrapper}>
-            <Svg width={size} height={size}>
-              {paths.map((slice, i) => (
-                <React.Fragment key={i}>
-                  <Path d={slice.path} fill={slice.color} />
-                  <SvgText
-                    x={slice.labelX}
-                    y={slice.labelY}
-                    fill="#fff"
-                    fontSize="12"
-                    fontWeight="bold"
-                    textAnchor="middle"
-                    alignmentBaseline="middle"
-                  >
-                    {slice.percent}%
-                  </SvgText>
-                </React.Fragment>
-              ))}
-            </Svg>
-
+            {totalSlots === 0 ? (
+              availabilityLoading ? (
+                <ActivityIndicator color={Colors.gray} />
+              ) : (
+                <Text style={styles.chartEmptyText}>Sin datos</Text>
+              )
+            ) : (
+              <>
+                <Svg width={size} height={size}>
+                  {paths.map((slice, i) => (
+                    <React.Fragment key={`slice-${i}`}>
+                      <Path d={slice.path} fill={slice.color} />
+                      <SvgText
+                        x={slice.labelX}
+                        y={slice.labelY}
+                        fill="#fff"
+                        fontSize="12"
+                        fontWeight="bold"
+                        textAnchor="middle"
+                        alignmentBaseline="middle"
+                      >
+                        {slice.percent}%
+                      </SvgText>
+                    </React.Fragment>
+                  ))}
+                </Svg>
+                {availabilityLoading && (
+                  <View style={styles.chartOverlay} pointerEvents="none">
+                    <ActivityIndicator color={Colors.white} />
+                  </View>
+                )}
+              </>
+            )}
           </View>
         </View>
 
@@ -112,18 +292,31 @@ export default function Home() {
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardTitle}>Anular reservas</Text>
+        <Text style={styles.cardTitle}>Mis reservas</Text>
 
         <View style={styles.reservationsBox}>
-          {MOCK_RESERVATIONS.map((item, index) => (
-            <View key={item.plate} style={[styles.reservationRow, index > 0 && styles.separator]}>
-              <View style={styles.reservationLeft}>
-                <Text style={styles.reservationPlate}>{item.plate}</Text>
-                <Text style={styles.reservationRut}>{item.rut}</Text>
-              </View>
-              <Text style={styles.reservationTime}>{item.time}</Text>
+          {reservasLoading && activeReservas.length === 0 ? (
+            <View style={styles.reservationsPlaceholder}>
+              <ActivityIndicator color={Colors.gray} />
             </View>
-          ))}
+          ) : activeReservas.length === 0 ? (
+            <View style={styles.reservationsPlaceholder}>
+              <Text style={styles.reservationsEmpty}>No tienes reservas activas.</Text>
+              <Text style={styles.reservationsHelper}>
+                Crea una nueva reserva o refresca más tarde para ver actualizaciones.
+              </Text>
+            </View>
+          ) : (
+            activeReservas.map((item, index) => (
+              <View key={item.id} style={[styles.reservationRow, index > 0 && styles.separator]}>
+                <View style={styles.reservationLeft}>
+                  <Text style={styles.reservationPlate}>{item.placa}</Text>
+                  <Text style={styles.reservationRut}>{item.rut}</Text>
+                </View>
+                <Text style={styles.reservationTime}>{item.horario}</Text>
+              </View>
+            ))
+          )}
         </View>
 
         <TouchableOpacity
@@ -132,13 +325,12 @@ export default function Home() {
           accessibilityRole="button"
           accessibilityLabel="Ir a anular reservas"
         >
-          <Text style={styles.actionButtonText}>Anular reservas</Text>
+          <Text style={styles.actionButtonText}>Ver mis reservas /activas)</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -174,10 +366,22 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   chartWrapper: {
-    width: '50%',
+    width: "50%",
     height: 160,
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
+  },
+  chartOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "rgba(0,0,0,0.35)",
+    borderRadius: 8,
+  },
+  chartEmptyText: {
+    fontSize: Typography.body,
+    color: Colors.gray,
   },
   statusRow: {
     flexDirection: "row",
@@ -225,6 +429,25 @@ const styles = StyleSheet.create({
     borderColor: Colors.lightGray,
     borderRadius: 8,
     marginBottom: 16,
+    overflow: "hidden",
+  },
+  reservationsPlaceholder: {
+    paddingHorizontal: 16,
+    paddingVertical: 24,
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  reservationsEmpty: {
+    fontSize: Typography.body,
+    color: Colors.dark,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+  reservationsHelper: {
+    fontSize: Typography.small,
+    color: Colors.gray,
+    textAlign: "center",
   },
   reservationRow: {
     flexDirection: "row",
@@ -257,5 +480,3 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
 });
-
-
