@@ -1,12 +1,10 @@
-// src/services/reservas.ts
 import { API_URL } from "../config/api";
 
 export type CrearReservaBody = {
-  hora_inicio: string; // ISO string
-  hora_termino: string; // ISO string
+  hora_inicio: string;
+  hora_termino: string;
+  rut_visitante: string;
   placa_patente_visitante: string;
-  numero_estacionamiento: number;
-  numero_departamento: number;
 };
 
 export type CrearReservaResp =
@@ -38,13 +36,23 @@ export type CancelarReservaResp =
   | { ok: true; message: string }
   | { ok: false; error: string };
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? API_URL; // ajusta segun tu entorno
+const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? API_URL;
 
-export async function crearReserva(body: CrearReservaBody): Promise<CrearReservaResp> {
+export async function crearReserva(
+  body: CrearReservaBody,
+  token: string | null
+): Promise<CrearReservaResp> {
+  if (!token) {
+    return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
+  }
+
   try {
     const res = await fetch(`${API_BASE}/reservas`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(body),
     });
 
@@ -100,7 +108,10 @@ export async function listarReservas(token: string | null): Promise<ListarReserv
   }
 }
 
-export async function cancelarReserva(id: number, token: string | null): Promise<CancelarReservaResp> {
+export async function cancelarReserva(
+  id: number,
+  token: string | null
+): Promise<CancelarReservaResp> {
   if (!token) {
     return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
   }
