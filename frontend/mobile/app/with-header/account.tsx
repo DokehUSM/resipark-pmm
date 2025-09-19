@@ -19,7 +19,7 @@ export default function Account() {
 
       {/* Avatar */}
       <View style={styles.avatar}>
-        <Ionicons name="person-outline" size={128} color={Colors.gray} />
+        <Ionicons name="business-outline" size={128} color={Colors.gray} />
       </View>
 
       {/* Número de depto */}

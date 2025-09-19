@@ -53,7 +53,7 @@ export default function Header() {
             accessibilityLabel="Ir a mi cuenta"
             style={styles.profileButton}
           >
-            <Ionicons name="person-outline" size={22} color={Colors.dark} />
+            <Ionicons name="business-outline" size={22} color={Colors.dark} />
           </Pressable>
         </View>
       </View>
