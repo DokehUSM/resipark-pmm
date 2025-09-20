@@ -1,110 +1,13 @@
 <!doctype html>
-<html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ResiPark – Estado de Estacionamientos</title>
-  <style>
-    :root{--bg:#0b0f14;--card:#121821;--muted:#a9b0bb;--red:#e5484d;--green:#30a46c;--amber:#ffb224}
-    *{box-sizing:border-box} body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;color:#e6edf3;background:var(--bg)}
-    header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#0e141b;border-bottom:1px solid #1e2631;position:sticky;top:0}
-    .controls{display:flex;gap:10px;align-items:center} button,select,input{padding:8px 10px;border-radius:8px;border:1px solid #3b4554;background:#1a212b;color:#e6edf3}
-    main{padding:18px} .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
-    .card{background:var(--card);border:1px solid #202938;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
-    .badge{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:6px 10px;font-weight:600}
-    .dot{width:10px;height:10px;border-radius:50%}
-    .green{background:#143424;color:#9ae6b4;border:1px solid #1e5a3a}.dot.green{background:var(--green)}
-    .red{background:#3a1719;color:#feb2b2;border:1px solid #6b1f23}.dot.red{background:var(--red)}
-    .amber{background:#3a2a13;color:#ffe5a3;border:1px solid #6b4a1b}.dot.amber{background:var(--amber)}
-    .meta{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
-    footer{padding:12px 18px;color:var(--muted);border-top:1px solid #1e2631}
-  </style>
-</head>
-<body>
-<header>
-  <h1>ResiPark – Disponibilidad</h1>
-  <div class="controls">
-    <button id="btn">Actualizar</button>
-    <label><input type="checkbox" id="auto" checked> Auto</label>
-    <select id="ms">
-      <option value="2000">2s</option>
-      <option value="5000" selected>5s</option>
-      <option value="10000">10s</option>
-    </select>
-    <input id="fnum" type="number" placeholder="Filtrar # (opcional)" />
-  </div>
-</header>
-<main>
-  <section id="grid" class="grid"></section>
-</main>
-<footer><small>Backend: <code id="base"></code></small></footer>
-
-<script>
-const BASE = (localStorage.getItem('API_BASE') || 'http://localhost:8004'); // cambia si tu backend está en otro host
-document.getElementById('base').textContent = BASE;
-
-const grid = document.getElementById('grid');
-const btn = document.getElementById('btn');
-const auto = document.getElementById('auto');
-const ms = document.getElementById('ms');
-const fnum = document.getElementById('fnum');
-
-function info(e){
-  switch(e.estado){case 0:return{label:'Libre',cls:'green'};
-    case 1:return{label:'Ocupado',cls:'red'};
-    case 3:return{label:'Pendiente',cls:'amber'};
-    default:return{label:'?',cls:'amber'};}
-}
-function fmt(iso){try{return new Date(iso).toLocaleString()}catch{return iso||'-'}}
-
-function render(estados) {
-  grid.innerHTML = "";
-  const map = {};
-  estados.forEach(e => { map[e.estacionamiento_numero] = e; });
-
-  for (let i = 1; i <= 50; i++) {
-    const e = map[i] || { estacionamiento_numero: i, estado: 0, updated_at: null };
-    const {label, cls} = info(e);
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <h3>Estac. #${e.estacionamiento_numero}</h3>
-      <div class="badge ${cls}">
-        <span class="dot ${cls}"></span> ${label}
-      </div>
-      <div class="meta">
-        <span>Estado: ${e.estado}</span>
-        <span>${fmt(e.updated_at)}</span>
-      </div>`;
-    grid.appendChild(card);
-  }
-}
-
-
-async function fetchAll(){
-  const filter = fnum.value.trim();
-  const url = filter ? `${BASE}/estados/${encodeURIComponent(filter)}` : `${BASE}/estados`;
-  try{
-    const r = await fetch(url, {cache:'no-store'});
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    const data = await r.json();
-    render(Array.isArray(data)?data:[data]);
-  }catch(err){
-    grid.innerHTML = `<div class="card"><strong>Error:</strong> ${err.message}.
-      <div style="margin-top:8px;font-size:12px;color:#a9b0bb">
-        ¿Levantaste el backend en <code>${BASE}</code>? Si usas archivo local, sirve esta carpeta con un servidor y habilita CORS en FastAPI.
-      </div></div>`;
-  }
-}
-
-let t=null; function start(){stop(); t=setInterval(fetchAll, Number(ms.value||5000));}
-function stop(){ if(t) clearInterval(t); t=null; }
-
-btn.onclick = fetchAll;
-auto.onchange = ()=> auto.checked ? start() : stop();
-ms.onchange = ()=> auto.checked && start();
-
-fetchAll(); start();
-</script>
-</body>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Vite + React + TS</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
