@@ -1,6 +1,33 @@
-// ⚠️ Ajusta según tu entorno:
-// - Android Emulator: http://10.0.2.2:8002
-// - iOS Simulator: http://localhost:8002
-// - Dispositivo físico: http://<TU_IP_LOCAL>:8002
+// Default placeholder for local dev (update with your backend base URL when needed).
+export const DEFAULT_API_URL = "http://192.168.50.19:8002";
+export const API_URL_STORAGE_KEY = "apiBaseUrl";
 
-export const API_URL = "http://192.168.50.19:8002";
+let currentApiUrl: string | null = null;
+
+export function normalizeApiUrl(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return trimmed.replace(/\/+$/, "");
+}
+
+export function setCurrentApiUrl(value: string | null) {
+  currentApiUrl = value ? normalizeApiUrl(value) : null;
+  return currentApiUrl;
+}
+
+export function getCurrentApiUrl(): string {
+  if (!currentApiUrl) {
+    throw new Error("API URL not configured");
+  }
+  return currentApiUrl;
+}
+
+export function tryGetCurrentApiUrl(): string | null {
+  return currentApiUrl;
+}
+
+export function isValidApiUrl(value: string): boolean {
+  const normalized = normalizeApiUrl(value);
+  if (!normalized) return false;
+  return /^https?:\/\//i.test(normalized);
+}

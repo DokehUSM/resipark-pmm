@@ -21,7 +21,14 @@ export default function DashboardLayout() {
         <Toolbar><Typography variant="h6" className="font-semibold">Resipark</Typography></Toolbar>
       </AppBar>
 
-      <Drawer variant="permanent" sx={{ width: drawerWidth, [`& .MuiDrawer-paper`]: { width: drawerWidth } }}>
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          [`& .MuiDrawer-paper`]: { width: drawerWidth },
+        }}
+      >
         <Toolbar />
         <List>
           {items.map(i => (
@@ -33,9 +40,18 @@ export default function DashboardLayout() {
         </List>
       </Drawer>
 
-      <Box component="main" sx={{ ml: `${drawerWidth}px` }}>
+      <Box
+        component="main"
+        sx={{
+          ml: `${drawerWidth}px`,
+          height: '100vh',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <Toolbar />
-        <Box className="p-6"><Outlet /></Box>
+        <Box className="p-6 flex-1 overflow-hidden"><Outlet /></Box>
       </Box>
     </Box>
   )

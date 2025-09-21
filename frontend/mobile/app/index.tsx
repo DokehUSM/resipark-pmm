@@ -1,56 +1,92 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
-  View,
-  Text,
+  ActivityIndicator,
+  Alert,
+  Image,
   StyleSheet,
+  Text,
   TextInput,
   TouchableOpacity,
-  Image,
-  Alert,
+  View,
 } from "react-native";
 import { router } from "expo-router";
+
 import { Colors, Typography } from "@/theme";
 import { login as loginApi } from "@/services/login";
 import { useAuth } from "@/context/AuthContext";
+import { useApiConfig } from "@/context/ApiConfigContext";
 
 export default function Login() {
   const { login } = useAuth();
+  const { apiUrl, loading: apiLoading } = useApiConfig();
   const [depto, setDepto] = useState("");
   const [password, setPassword] = useState("");
-  const isDisabled = !depto.trim() || !password.trim();
+  const tapCountRef = useRef(0);
+  const lastTapRef = useRef(0);
+
+  useEffect(() => {
+    if (apiLoading) return;
+    if (!apiUrl) {
+      router.replace("/settings");
+    }
+  }, [apiLoading, apiUrl]);
+
+  const handleSecretTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current > 1200) {
+      tapCountRef.current = 0;
+    }
+    tapCountRef.current += 1;
+    lastTapRef.current = now;
+
+    if (tapCountRef.current >= 5) {
+      tapCountRef.current = 0;
+      router.push("/settings");
+    }
+  };
 
   const handleLogin = async () => {
-    // ✅ mandar depto como string (sin parseInt)
+    if (!apiUrl) return;
+
     const result = await loginApi(depto.trim(), password);
 
     if (!result.ok) {
-      Alert.alert("No pudimos iniciar sesión", result.error);
-      console.log("No se pudo iniciar sesión");
+      Alert.alert("No pudimos iniciar sesion", result.error);
+      console.log("No se pudo iniciar sesion");
       return;
     }
 
-    // ✅ pasar departamento y access_token al contexto
     await login(result.data.departamento, result.data.access_token);
-
     router.replace("/with-header/home");
-    console.log("Se ha iniciado la sesión");
+    console.log("Se ha iniciado la sesion");
   };
+
+  if (apiLoading || !apiUrl) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Cargando configuracion...</Text>
+      </View>
+    );
+  }
+
+  const isDisabled = !depto.trim() || !password.trim();
 
   return (
     <View style={styles.container}>
-      <Text style={styles.welcome}>¡Bienvenido!</Text>
-      <Text style={styles.title}>Iniciar Sesión</Text>
+      <Text style={styles.welcome}>Bienvenido!</Text>
+      <Text style={styles.title}>Iniciar Sesion</Text>
 
-      <View style={styles.logoWrapper}>
+      <TouchableOpacity style={styles.logoWrapper} activeOpacity={1} onPress={handleSecretTap}>
         <Image
           source={require("../assets/resipark-logo.png")}
           style={styles.logo}
           resizeMode="contain"
         />
-      </View>
+      </TouchableOpacity>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Número de depto.</Text>
+        <Text style={styles.label}>Numero de depto.</Text>
         <TextInput
           style={styles.input}
           placeholder="1108"
@@ -63,7 +99,7 @@ export default function Login() {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Contraseña</Text>
+        <Text style={styles.label}>Contrasena</Text>
         <TextInput
           style={styles.input}
           secureTextEntry
@@ -83,7 +119,7 @@ export default function Login() {
       </TouchableOpacity>
 
       <TouchableOpacity>
-        <Text style={styles.link}>¿Olvidaste tu contraseña?</Text>
+        <Text style={styles.link}>Olvidaste tu contrasena?</Text>
       </TouchableOpacity>
     </View>
   );
@@ -95,6 +131,17 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingHorizontal: 24,
     backgroundColor: Colors.light,
+  },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.light,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: Typography.body,
+    color: Colors.gray,
   },
   welcome: {
     marginBottom: 4,
