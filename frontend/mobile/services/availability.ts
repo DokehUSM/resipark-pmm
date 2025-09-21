@@ -1,4 +1,4 @@
-import { API_URL } from "../config/api";
+import { tryGetCurrentApiUrl } from "@/config/api";
 
 export type SlotStatus = "libre" | "reservado" | "ocupado";
 
@@ -8,11 +8,19 @@ export type AvailabilitySlot = {
   status: SlotStatus;
 };
 
+const CONFIG_ERROR: { ok: false; error: string } = {
+  ok: false,
+  error: "Configura la URL del servidor en Ajustes",
+};
+
 export async function fetchAvailability(): Promise<
   { ok: true; data: AvailabilitySlot[] } | { ok: false; error: string }
 > {
+  const baseUrl = tryGetCurrentApiUrl();
+  if (!baseUrl) return CONFIG_ERROR;
+
   try {
-    const res = await fetch(`${API_URL}/disponibilidad`, {
+    const res = await fetch(`${baseUrl}/disponibilidad`, {
       headers: { "Content-Type": "application/json" },
     });
 
@@ -22,7 +30,6 @@ export async function fetchAvailability(): Promise<
     }
 
     const json = await res.json();
-    // Tu backend devuelve { disponibilidad: [{ numero, estado }, ...] }
     const list = Array.isArray(json) ? json : json.disponibilidad;
 
     const data: AvailabilitySlot[] = (list ?? []).map(
@@ -32,14 +39,11 @@ export async function fetchAvailability(): Promise<
         status: it.estado,
       })
     );
-    console.log(data)
     return { ok: true, data };
   } catch (e: any) {
     return { ok: false, error: e?.message ?? "Error de red" };
   }
 }
-
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? API_URL;
 
 export type AvailabilityTotals = {
   total: number;
@@ -55,8 +59,11 @@ export async function fetchAvailabilityTotals(token: string | null): Promise<
     return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
   }
 
+  const baseUrl = tryGetCurrentApiUrl();
+  if (!baseUrl) return CONFIG_ERROR;
+
   try {
-    const res = await fetch(`${API_BASE}/estacionamientos/disponibilidad`, {
+    const res = await fetch(`${baseUrl}/estacionamientos/disponibilidad`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",

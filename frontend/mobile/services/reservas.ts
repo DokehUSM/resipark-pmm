@@ -1,4 +1,4 @@
-import { API_URL } from "../config/api";
+import { tryGetCurrentApiUrl } from "@/config/api";
 
 export type CrearReservaBody = {
   hora_inicio: string;
@@ -36,7 +36,7 @@ export type CancelarReservaResp =
   | { ok: true; message: string }
   | { ok: false; error: string };
 
-const API_BASE = process.env.EXPO_PUBLIC_API_BASE ?? API_URL;
+const CONFIG_ERROR_MESSAGE = "Configura la URL del servidor en Ajustes";
 
 export async function crearReserva(
   body: CrearReservaBody,
@@ -46,8 +46,13 @@ export async function crearReserva(
     return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
   }
 
+  const baseUrl = tryGetCurrentApiUrl();
+  if (!baseUrl) {
+    return { ok: false, error: CONFIG_ERROR_MESSAGE };
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/reservas`, {
+    const res = await fetch(`${baseUrl}/reservas`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -72,8 +77,13 @@ export async function listarReservas(token: string | null): Promise<ListarReserv
     return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
   }
 
+  const baseUrl = tryGetCurrentApiUrl();
+  if (!baseUrl) {
+    return { ok: false, error: CONFIG_ERROR_MESSAGE };
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/reservas`, {
+    const res = await fetch(`${baseUrl}/reservas`, {
       headers: {
         Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
@@ -116,8 +126,13 @@ export async function cancelarReserva(
     return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
   }
 
+  const baseUrl = tryGetCurrentApiUrl();
+  if (!baseUrl) {
+    return { ok: false, error: CONFIG_ERROR_MESSAGE };
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/reservas/${id}`, {
+    const res = await fetch(`${baseUrl}/reservas/${id}`, {
       method: "DELETE",
       headers: {
         Authorization: `Bearer ${token}`,
