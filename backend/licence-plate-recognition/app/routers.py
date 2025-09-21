@@ -19,10 +19,6 @@ def get_db():
     finally:
         db.close()
 
-@router.get("/usuarios")
-def listar_usuarios(db: Session = Depends(get_db)):
-    return db.query(Usuario).all()
-    
 
 @router.get("/verificar-patente/{patente}/{tipo_vehiculo}")
 def verificar_patente(patente: str, tipo_vehiculo: int, db: Session = Depends(get_db)):
