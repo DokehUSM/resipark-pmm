@@ -43,7 +43,7 @@ export default function ActionTabs({
           )}
         </ToggleButton>
         <ToggleButton value="cancel" sx={{ flex: 1, bgcolor: "error.light !important" }}>
-          Cancelar reservas
+          Administrar<br />reservas
         </ToggleButton>
       </ToggleButtonGroup>
 
