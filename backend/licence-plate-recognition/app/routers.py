@@ -149,7 +149,7 @@ def registrar_ingreso_residente(
         query_registro = text("""
             INSERT INTO registro_evento_acceso 
             (hora, tipo, metodo, placa_detectada, placa_patente_vehiculo)
-            VALUES (NOW(), 1, 1, :patente, :patente)
+            VALUES (NOW(), 0, 0, :patente, :patente)
             RETURNING id
         """)
         
@@ -207,7 +207,7 @@ def registrar_ingreso_visitante(
         query_registro = text("""
             INSERT INTO registro_evento_acceso 
             (hora, tipo, metodo, placa_detectada, id_reserva, placa_patente_vehiculo)
-            VALUES (NOW(), 1, 1, :patente, :id_reserva, NULL)
+            VALUES (NOW(), 0, 1, :patente, :id_reserva, NULL)
             RETURNING id
         """)
         
