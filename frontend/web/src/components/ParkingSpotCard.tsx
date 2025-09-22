@@ -9,15 +9,16 @@ type ParkingSpotCardProps = {
 };
 
 export default function ParkingSpotCard({ spot, onSelect, selected }: ParkingSpotCardProps) {
-  const color =
-    spot.status === "available"
-      ? "bg-green-100 border-green-300"
-      : spot.status === "reserved"
-        ? "bg-yellow-100 border-yellow-300"
-        : "bg-red-100 border-red-300";
+  const { status, code } = spot;
 
-  const statusLabel =
-    spot.status === "available" ? "Disponible" : spot.status === "reserved" ? "Reservado" : "Ocupado";
+  const styles =
+    status === "available"
+      ? "bg-green-50 border-green-500 text-green-900"
+      : status === "reserved" // 👉 ahora amarillo
+      ? "bg-yellow-50 border-yellow-500 text-yellow-900"
+      : status === "occupied" // 👉 ahora rojo
+      ? "bg-red-50 border-red-500 text-red-900"
+      : "bg-blue-50 border-blue-500 text-blue-900"; // Azul: asignados
 
   return (
     <Paper
@@ -25,17 +26,15 @@ export default function ParkingSpotCard({ spot, onSelect, selected }: ParkingSpo
       elevation={0}
       onClick={onSelect}
       className={clsx(
-        "h-full w-full select-none rounded-lg border p-3 text-left transition focus:outline-none",
-        color,
-        onSelect && "cursor-pointer focus-visible:ring-2 focus-visible:ring-indigo-400",
-        selected && "ring-2 ring-indigo-400"
+        "aspect-square flex items-center justify-center border-4 rounded-md font-bold text-lg transition",
+        styles,
+        onSelect && "cursor-pointer hover:opacity-80",
+        selected && "ring-4 ring-indigo-500 bg-indigo-100 shadow-lg"
       )}
       aria-pressed={onSelect ? selected : undefined}
       type={onSelect ? "button" : undefined}
     >
-      <Typography className="font-semibold">{spot.code}</Typography>
-      <Typography className="text-sm text-gray-600">Desde: {spot.since}</Typography>
-      <Typography className="mt-1 text-xs uppercase tracking-wide text-gray-500">Estado: {statusLabel}</Typography>
+      <Typography variant="body1">{code}</Typography>
     </Paper>
   );
 }
