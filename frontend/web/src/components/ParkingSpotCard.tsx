@@ -14,9 +14,9 @@ export default function ParkingSpotCard({ spot, onSelect, selected }: ParkingSpo
   const styles =
     status === "available"
       ? "bg-green-50 border-green-500 text-green-900"
-      : status === "occupied" // 👉 ahora amarillo
+      : status === "reserved" // 👉 ahora amarillo
       ? "bg-yellow-50 border-yellow-500 text-yellow-900"
-      : status === "reserved" // 👉 ahora rojo
+      : status === "occupied" // 👉 ahora rojo
       ? "bg-red-50 border-red-500 text-red-900"
       : "bg-blue-50 border-blue-500 text-blue-900"; // Azul: asignados
 

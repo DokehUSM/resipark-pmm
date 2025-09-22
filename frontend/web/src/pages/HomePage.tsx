@@ -44,9 +44,6 @@ export default function HomePage() {
   const availableSpots = mockSpots.filter((s) => s.status === "available");
   const reservedSpots = mockSpots.filter((s) => s.status === "reserved");
   const occupiedSpots = mockSpots.filter((s) => s.status === "occupied");
-  const processedSpots = mockSpots.filter((s) => s.status === "assigned");
-
-  const realAvailable = totalSpots - reservedSpots.length - occupiedSpots.length;
 
   // Acciones
   const handleCancelReservation = (id: string) => {
@@ -258,39 +255,18 @@ export default function HomePage() {
           {/* Chips informativos */}
           <Box className="flex gap-2 pb-2 flex-wrap">
             <Chip
-              label={`Disponibles: ${realAvailable}`}
+              label={`Disponibles: ${availableSpots.length}`}
               color="success"
               size="small"
-              onClick={() => setSelectedCategory("new")}
-              sx={{ cursor: "pointer" }}
             />
             <Chip
               label={`Reservados: ${reservedSpots.length}`}
-              color="error"
-              size="small"
-              onClick={() => setSelectedCategory("cancel")}
-              sx={{ cursor: "pointer" }}
-            />
-            <Chip
-              label={`Ocupados sin reserva: ${occupiedSpots.length}`}
               color="warning"
               size="small"
-              onClick={() => {
-                setSelectedCategory("assign");
-                setSelectedOccupiedSpot(""); // ningún spot seleccionado por defecto
-              }}
-              sx={{ cursor: "pointer" }}
             />
             <Chip
-              label={`Reservas sin asignar: ${pendingReservations.length}`}
-              color="default"
-              size="small"
-              onClick={() => setSelectedCategory("assign")}
-              sx={{ cursor: "pointer" }}
-            />
-            <Chip
-              label={`Procesados: ${processedSpots.length}`}
-              color="info"
+              label={`Ocupados: ${occupiedSpots.length}`}
+              color="error"
               size="small"
             />
           </Box>
