@@ -31,12 +31,12 @@ export default function ActionTabs({
         fullWidth
       >
         <ToggleButton value="new" sx={{ flex: 1, bgcolor: "success.light !important" }}>
-          Nueva reserva
+          Agregar visita
         </ToggleButton>
         <ToggleButton value="assign" sx={{ flex: 1, bgcolor: "warning.light !important" }}>
           {pendingReservations.length > 0 ? (
             <Badge color="error" variant="dot">
-              Asignar reservas
+              Reservar<br />estacionamiento
             </Badge>
           ) : (
             "Asignar reservas"
@@ -60,9 +60,9 @@ export default function ActionTabs({
         }}
       >
         <Typography variant="subtitle1" className="font-semibold mb-2">
-          {selectedCategory === "new" && "Panel de nueva reserva"}
-          {selectedCategory === "assign" && "Panel de asignar reservas"}
-          {selectedCategory === "cancel" && "Panel de cancelar reservas"}
+          {selectedCategory === "new"}
+          {selectedCategory === "assign"}
+          {selectedCategory === "cancel"}
           {!selectedCategory && "Seleccione una acción"}
         </Typography>
 
