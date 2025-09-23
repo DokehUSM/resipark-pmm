@@ -1,4 +1,6 @@
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Paper, Typography} from "@mui/material";
+import HlsPlayer from "../components/HlsPlayer"; 
+
 
 export default function CamerasPanel() {
   return (
@@ -6,6 +8,7 @@ export default function CamerasPanel() {
       sx={{
         flexBasis: "55%",
         maxWidth: "55%",
+        height: "200%",
         display: "flex",
         flexDirection: "column",
         gap: 2,
@@ -19,7 +22,12 @@ export default function CamerasPanel() {
         </Box>
         <Box className="flex flex-1 items-center justify-center bg-gray-200 text-gray-500">
           {/* Aquí va el stream real */}
-          <Typography>Stream cámara de entrada</Typography>
+        <Box className="flex flex-1 items-center justify-center bg-gray-200 text-gray-500">
+          <div style={{ width: "100%", height: "100%" }}>
+            <HlsPlayer src="/hls/cam_entrada/index.m3u8" />
+          </div>
+        </Box>
+
         </Box>
       </Paper>
 
