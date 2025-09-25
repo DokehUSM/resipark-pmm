@@ -91,4 +91,4 @@ graph TD
 
 ## 📄 Licencia
 
-Este proyecto está bajo licencia MIT. 
+Este proyecto está bajo licencia MIA. 
