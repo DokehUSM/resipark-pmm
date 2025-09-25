@@ -31,9 +31,9 @@ export default function Account() {
       </TouchableOpacity>
 
       {/* Link Cambiar contraseña */}
-      <TouchableOpacity>
+      {/* <TouchableOpacity>
         <Text style={styles.link}>Cambiar contraseña</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }
