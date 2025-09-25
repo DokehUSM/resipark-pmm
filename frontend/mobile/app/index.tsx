@@ -74,7 +74,7 @@ export default function Login() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.welcome}>Bienvenido!</Text>
+      <Text style={styles.welcome}>¡Bienvenido!</Text>
       <Text style={styles.title}>Iniciar Sesion</Text>
 
       <TouchableOpacity style={styles.logoWrapper} activeOpacity={1} onPress={handleSecretTap}>
@@ -118,9 +118,9 @@ export default function Login() {
         <Text style={styles.buttonText}>Ingresar</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity>
+      {/* <TouchableOpacity>
         <Text style={styles.link}>Olvidaste tu contrasena?</Text>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 }
