@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "43cce235-9715-42bc-a3a3-9f82851c9147"
+      }
+    },
+    "android": {
+      "package": "com.resipark.mobile_preview"
+    }
+  }
+}
