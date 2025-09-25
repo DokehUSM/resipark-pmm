@@ -26,6 +26,12 @@ export default function CamerasPanel() {
           <div style={{ width: "100%", height: "100%" }}>
             <HlsPlayer src="/hls/cam_entrada/index.m3u8" />
           </div>
+          {/* <video
+            src="/videos/entrada_vehiculo.mp4"
+            controls
+            autoPlay
+            style={{ width: "100%", height: "100%" }}
+          /> */}
         </Box>
 
         </Box>
