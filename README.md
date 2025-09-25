@@ -1,6 +1,6 @@
 # 🚗 Sistema Integrado de Gestión de Estacionamiento en Tiempo Real
 
-<img src="Logo-ResiPark.png" alt="ResiPark Logo" width="200"/>
+<img src="images/Logo-ResiPark.png" alt="ResiPark Logo" width="200"/>
 
 ## 📜 Descripción
 
