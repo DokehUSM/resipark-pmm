@@ -214,7 +214,7 @@ export default function HomePage() {
           <TextField size="small" label="RUT" fullWidth value={newRut} onChange={e => setNewRut(e.target.value)} />
           <TextField size="small" label="Depto destino" fullWidth value={newDepto} onChange={e => setNewDepto(e.target.value)} />
           <Button variant="contained" color="success" fullWidth onClick={onCreateVisit}>
-            Reservar
+            Agregar visita
           </Button>
         </Box>
       );
@@ -254,7 +254,7 @@ export default function HomePage() {
                     <IconButton
                       edge="end"
                       aria-label="asignar"
-                      title="Asignar estacionamiento"
+                      title="Reservar estacionamiento"
                       disabled={!selectedLots[String(r.id)]}
                       onClick={() => handleAssign(String(r.id))}
                     >
