@@ -5,6 +5,14 @@ export const api = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL })
 export const getPlates = (q?: string) =>
   api.get('/placas', { params: { q } })
 
+export type PlateAPI = { id: string; depto: string; patente: string; tipo_vehiculo: number }
+
+export const updatePlate = (patenteActual: string, payload: {
+  patente?: string
+  tipo_vehiculo?: number
+}) => api.put(`/placas/${encodeURIComponent(patenteActual)}`, payload)
+
+
 export const getHistory = (q?: string) =>
   api.get('/historial', { params: { q } })
 

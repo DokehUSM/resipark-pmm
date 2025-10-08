@@ -37,7 +37,8 @@ def listar_placas(q: str | None = None, db: Session = Depends(get_db)):
       SELECT
         v.placa_patente AS id,
         v.id_departamento AS depto,
-        v.placa_patente AS patente
+        v.placa_patente AS patente,
+        v.tipo_vehiculo   AS tipo_vehiculo
       FROM vehiculo v
     """
     params = {}
@@ -47,6 +48,95 @@ def listar_placas(q: str | None = None, db: Session = Depends(get_db)):
     sql += " ORDER BY v.id_departamento, v.placa_patente"
     rows = db.execute(text(sql), params).mappings().all()
     return [dict(r) for r in rows]
+
+@placas.put("/{patente_actual}")
+def actualizar_vehiculo(
+    patente_actual: str,
+    payload: dict,
+    db: Session = Depends(get_db),
+):
+    """
+    Body (todos opcionales):
+    {
+      "patente": "NUEVA123",     # nueva patente
+      "tipo_vehiculo": 1         # nuevo tipo (int)
+    }
+    """
+    nueva_patente = payload.get("patente")
+    nuevo_tipo = payload.get("tipo_vehiculo")
+
+    # verificar existencia
+    row = db.execute(
+        text("SELECT placa_patente FROM vehiculo WHERE placa_patente = :p"),
+        {"p": patente_actual},
+    ).fetchone()
+    if not row:
+        raise HTTPException(404, "Vehículo no encontrado")
+
+    # si cambia patente, verificar referencias
+    if nueva_patente and nueva_patente != patente_actual:
+        # ¿ya existe la nueva?
+        ya = db.execute(
+            text("SELECT 1 FROM vehiculo WHERE placa_patente = :p"),
+            {"p": nueva_patente},
+        ).fetchone()
+        if ya:
+            raise HTTPException(409, "La nueva patente ya existe")
+
+        ref = db.execute(
+            text("""
+                SELECT 1
+                FROM registro_evento_acceso
+                WHERE placa_patente_vehiculo = :p
+                LIMIT 1
+            """),
+            {"p": patente_actual},
+        ).fetchone()
+        if ref:
+            raise HTTPException(
+                409,
+                "No se puede cambiar la patente porque tiene eventos referenciados. (Cree un nuevo vehículo o deje esta patente tal cual).",
+            )
+
+        # actualizar PK
+        db.execute(
+            text("""
+                UPDATE vehiculo
+                   SET placa_patente = :nueva
+                 WHERE placa_patente = :vieja
+            """),
+            {"nueva": nueva_patente, "vieja": patente_actual},
+        )
+        patente_actual = nueva_patente  # seguir usando el valor nuevo
+
+    # actualizar tipo si viene
+    if nuevo_tipo is not None:
+        db.execute(
+            text("""
+                UPDATE vehiculo
+                   SET tipo_vehiculo = :t
+                 WHERE placa_patente = :p
+            """),
+            {"t": nuevo_tipo, "p": patente_actual},
+        )
+
+    db.commit()
+
+    # devolver fila actualizada
+    row = db.execute(
+        text("""
+            SELECT
+              placa_patente AS id,
+              id_departamento AS depto,
+              placa_patente   AS patente,
+              tipo_vehiculo
+            FROM vehiculo
+            WHERE placa_patente = :p
+        """),
+        {"p": patente_actual},
+    ).mappings().one()
+    return dict(row)
+
 
 # ================================
 # Subrouter: Historial
