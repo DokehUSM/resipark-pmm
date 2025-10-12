@@ -8,7 +8,7 @@ export const mockSpots: ParkingSpot[] = [
   { id: '5', code: 'A10', since: '3:15', status: 'available' },
   { id: '6', code: 'A11', since: '3:15', status: 'available' },
   { id: '7', code: 'A12', since: '3:15', status: 'available' },
-  { id: '8', code: 'A13', since: '3:15', status: 'occupied' },
+  { id: '8', code: 'A13', since: '3:15', status: 'occupiedReserved' },
   { id: '9', code: 'A13', since: '3:15', status: 'reserved' },
   { id: '10', code: 'A15', since: '3:15', status: 'available' },
   { id: '11', code: 'A16', since: '3:15', status: 'available' },

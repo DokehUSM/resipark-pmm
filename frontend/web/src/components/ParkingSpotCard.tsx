@@ -11,14 +11,13 @@ type ParkingSpotCardProps = {
 export default function ParkingSpotCard({ spot, onSelect, selected }: ParkingSpotCardProps) {
   const { status, code } = spot;
 
-  const styles =
-    status === "available"
-      ? "bg-green-50 border-green-500 text-green-900"
-      : status === "reserved" // 👉 ahora amarillo
-      ? "bg-yellow-50 border-yellow-500 text-yellow-900"
-      : status === "occupied" // 👉 ahora rojo
-      ? "bg-red-50 border-red-500 text-red-900"
-      : "bg-blue-50 border-blue-500 text-blue-900"; // Azul: asignados
+  const stylesMap: Record<ParkingSpot["status"], string> = {
+    available: "bg-green-50 border-green-500 text-green-900",
+    reserved: "bg-yellow-50 border-yellow-500 text-yellow-900",
+    occupied: "bg-red-50 border-red-500 text-red-900",
+    occupiedReserved: "bg-blue-50 border-blue-500 text-blue-900",
+  };
+  const styles = stylesMap[status] ?? stylesMap.available;
 
   return (
     <Paper

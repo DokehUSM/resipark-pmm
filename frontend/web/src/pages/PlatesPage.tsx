@@ -1,5 +1,5 @@
 // src/pages/PlatesPage.tsx
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { DataGrid, type GridColDef } from '@mui/x-data-grid'
 import {
   Box, IconButton, Paper, TextField, Typography,
@@ -15,6 +15,7 @@ const TIPO_OPCIONES: { value: number; label: string }[] = [
 ]
 
 type PlateRow = PlateAPI
+const REFRESH_MS = 10_000
 
 export default function PlatesPage() {
   const [rows, setRows] = useState<PlateRow[]>([])
@@ -27,19 +28,30 @@ export default function PlatesPage() {
   const [editPatente, setEditPatente] = useState('')
   const [editTipo, setEditTipo] = useState<number>(1) // default Auto
 
-  const fetchData = async () => {
+  const isMountedRef = useRef(true)
+  useEffect(() => () => {
+    isMountedRef.current = false
+  }, [])
+
+  const fetchData = useCallback(async () => {
+    if (!isMountedRef.current) return
+    setLoading(true)
     try {
-      setLoading(true)
       const { data } = await getPlates(q || undefined)
+      if (!isMountedRef.current) return
       setRows(data as PlateRow[])
     } catch (e) {
       console.error(e)
     } finally {
-      setLoading(false)
+      if (isMountedRef.current) setLoading(false)
     }
-  }
+  }, [q])
 
-  useEffect(() => { fetchData() }, [q]) // eslint-disable-line
+  useEffect(() => {
+    void fetchData()
+    const timer = setInterval(() => { void fetchData() }, REFRESH_MS)
+    return () => clearInterval(timer)
+  }, [fetchData])
 
   const handleOpenEdit = (row: PlateRow) => {
     setEditPatenteOriginal(row.patente)
