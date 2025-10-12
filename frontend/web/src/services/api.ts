@@ -23,6 +23,7 @@ export type PendingAPI = {
   hora_inicio: string; hora_termino: string
 }
 export type AssignedAPI = PendingAPI & { est: string } // est = id_estacionamiento
+export type DepartmentAPI = { id: string }
 
 // --- Estado de estacionamientos ---
 export const getSpotsState = () => api.get<SpotAPI[]>('/dashboard/estados')
@@ -48,6 +49,8 @@ export const unassignParking = (id_reserva: number) =>
 
 export const cancelReservation = (id_reserva: number) =>
   api.delete(`/reservas/${id_reserva}`)
+
+export const getDepartments = () => api.get<DepartmentAPI[]>('/departamentos')
 
 
 // Ejemplos para cuando tengas los endpoints en FastAPI:

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getSpotsState, getPendings, getAssigned,
   createVisit, assignParking, unassignParking, cancelReservation,
+  getDepartments,
   type SpotAPI, type PendingAPI, type AssignedAPI
 } from "../services/api";
 
@@ -123,6 +124,8 @@ export default function HomePage() {
   const [selectedLots, setSelectedLots] = useState<{ [id: string]: string }>({});
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [departmentsLoading, setDepartmentsLoading] = useState(false);
 
   const isMountedRef = useRef(false);
   useEffect(() => {
@@ -167,9 +170,29 @@ export default function HomePage() {
     return () => clearInterval(timer);
   }, [loadAll]);
 
-  // Lotes disponibles (desde la BD)
-  const availableLots = useMemo(
-    () => spots.filter((s) => s.status === "available").map((s) => s.code),
+  useEffect(() => {
+    let ignore = false;
+    const fetchDepartments = async () => {
+      try {
+        setDepartmentsLoading(true);
+        const { data } = await getDepartments();
+        if (!ignore) setDepartments(data.map((dept) => dept.id));
+      } catch (e) {
+        console.error("Error cargando departamentos:", e);
+        if (!ignore) setDepartments([]);
+      } finally {
+        if (!ignore) setDepartmentsLoading(false);
+      }
+    };
+    fetchDepartments();
+    return () => { ignore = true; };
+  }, []);
+
+  // Estacionamientos asignables (excluye los reservados)
+  const assignableLots = useMemo(
+    () => spots
+      .filter((s) => s.status !== "reserved" && s.status !== "occupiedReserved")
+      .map((s) => s.code),
     [spots]
   );
 
@@ -211,9 +234,10 @@ export default function HomePage() {
     const rutInfo = evaluateRut(newRut);
     const rutValue = rutInfo.submitValue;
     const depto = newDepto.trim();
+    const deptoValid = departments.includes(depto);
     const plateOk = isPlateValid(plate);
     const rutOk = !rutInfo.looksLikeRut || rutInfo.isValid;
-    if (!plateOk || !rutOk || !depto) {
+    if (!plateOk || !rutOk || !deptoValid) {
       alert("Revisa los datos de patente, RUT (o identificación) y departamento antes de continuar.");
       return;
     }
@@ -317,8 +341,14 @@ export default function HomePage() {
       const plateError = newPlate.length > 0 && !plateOk;
       const rutError = rutInfo.looksLikeRut && !rutInfo.isValid;
       const depto = newDepto.trim();
-      const deptoError = newDepto.length > 0 && !depto;
-      const canSubmit = plateOk && !rutError && !deptoError && depto.length > 0;
+      const deptoValid = departments.includes(depto);
+      const deptoError = newDepto !== "" && !deptoValid;
+      const canSubmit = plateOk && !rutError && deptoValid;
+      const departmentPlaceholder = departmentsLoading
+        ? "Cargando departamentos..."
+        : departments.length === 0
+          ? "Sin departamentos disponibles"
+          : "Selecciona un departamento";
 
       return (
         <Box className="space-y-3 flex-1">
@@ -355,17 +385,34 @@ export default function HomePage() {
             required
           />
           <TextField
+            select
             size="small"
-            label="Depto destino"
             fullWidth
             value={newDepto}
             onChange={(e) => setNewDepto(e.target.value)}
+            SelectProps={{ displayEmpty: true }}
             helperText={
-              deptoError ? "Ingresa un departamento válido." : (!depto ? "Obligatorio" : "")
+              departmentsLoading
+                ? "Cargando departamentos..."
+                : deptoError
+                  ? "Selecciona un departamento válido."
+                  : newDepto
+                    ? ""
+                    : departmentPlaceholder
             }
-            error={deptoError}
+            error={!departmentsLoading && deptoError}
             required
-          />
+            disabled={departmentsLoading || departments.length === 0}
+          >
+            <MenuItem value="">
+              {departmentPlaceholder}
+            </MenuItem>
+            {departments.map((dept) => (
+              <MenuItem key={dept} value={dept}>
+                {dept}
+              </MenuItem>
+            ))}
+          </TextField>
           <Button variant="contained" color="success" fullWidth onClick={onCreateVisit} disabled={!canSubmit}>
             Agregar visita
           </Button>
@@ -399,7 +446,7 @@ export default function HomePage() {
                       sx={{ minWidth: 100 }}
                     >
                       <MenuItem value="" disabled> Elegir… </MenuItem>
-                      {availableLots.map((lot) => (
+                      {assignableLots.map((lot) => (
                         <MenuItem key={lot} value={lot}>{lot}</MenuItem>
                       ))}
                     </Select>
