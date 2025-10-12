@@ -27,6 +27,22 @@ def listar_conserjes(db: Session = Depends(get_db)):
     return db.query(Conserje).all()
 
 # ================================
+# Subrouter: Departamentos
+# ================================
+departamentos = APIRouter(prefix="/departamentos", tags=["Departamentos"])
+
+@departamentos.get("/")
+def listar_departamentos(db: Session = Depends(get_db)):
+    rows = db.execute(
+        text("""
+            SELECT id
+              FROM departamento
+          ORDER BY id
+        """)
+    ).mappings().all()
+    return [dict(r) for r in rows]
+
+# ================================
 # Subrouter: Placas
 # ================================
 placas = APIRouter(prefix="/placas", tags=["Placas"])
@@ -384,6 +400,7 @@ def cancelar_reserva(id_reserva: int, db: Session = Depends(get_db)):
 # Incluir subrouters
 # ================================
 router.include_router(conserjes)
+router.include_router(departamentos)
 router.include_router(placas)
 router.include_router(historial)
 router.include_router(home)
