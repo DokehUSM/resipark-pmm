@@ -353,8 +353,6 @@ def asignar_estacionamiento(id_reserva: int, payload: dict, db: Session = Depend
     row_est = db.execute(text("SELECT ocupado FROM estacionamiento WHERE id = :id"), {"id": est}).fetchone()
     if not row_est:
         raise HTTPException(404, "Estacionamiento no existe")
-    if row_est[0] is True:
-        raise HTTPException(400, "Estacionamiento actualmente ocupado")
 
     ya = db.execute(text("""
       SELECT 1 FROM reserva
