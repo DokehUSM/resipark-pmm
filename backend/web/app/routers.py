@@ -1,10 +1,12 @@
 # backend/web/app/routers.py
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.db import SessionLocal
 from app.models import Conserje
+from pydantic import BaseModel
+from app.auth_utils import create_access_token
 
 # Router agregador
 router = APIRouter()
@@ -16,6 +18,54 @@ def get_db():
         yield db
     finally:
         db.close()
+
+# ================================
+# Subrouter: Auth
+# ================================
+auth = APIRouter(prefix="/auth", tags=["Auth"])
+
+
+class LoginRequest(BaseModel):
+    rut: str
+    contrasena: str
+
+
+@auth.post("/login")
+def login(req: LoginRequest, db: Session = Depends(get_db)):
+    """
+    Autentica a un conserje verificando el RUT (sin separadores) y la contraseña.
+    Devuelve un JWT valido por 60 minutos.
+    """
+    rut_limpio = req.rut.replace(".", "").replace("-", "").strip().upper()
+
+    row = (
+        db.execute(
+            text(
+                """
+                SELECT rut, nombre
+                  FROM conserje
+                 WHERE rut = :rut
+                   AND contrasena = crypt(:password, contrasena)
+                """
+            ),
+            {"rut": rut_limpio, "password": req.contrasena},
+        )
+        .mappings()
+        .first()
+    )
+
+    if not row:
+        raise HTTPException(status_code=401, detail="Credenciales inválidas")
+
+    token = create_access_token(data={"sub": row["rut"]}, expires_delta=timedelta(minutes=60))
+
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "rut": row["rut"],
+        "nombre": row["nombre"],
+    }
+
 
 # ================================
 # Subrouter: Conserjes
@@ -397,6 +447,7 @@ def cancelar_reserva(id_reserva: int, db: Session = Depends(get_db)):
 # ================================
 # Incluir subrouters
 # ================================
+router.include_router(auth)
 router.include_router(conserjes)
 router.include_router(departamentos)
 router.include_router(placas)
