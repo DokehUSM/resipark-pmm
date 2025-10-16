@@ -1,6 +1,25 @@
 // src/services/api.ts
 import axios from 'axios'
+
 export const api = axios.create({ baseURL: import.meta.env.VITE_API_BASE_URL })
+
+export type LoginResponse = {
+  access_token: string
+  token_type: 'bearer'
+  rut: string
+  nombre: string
+}
+
+export const setAuthToken = (token: string | null) => {
+  if (token) {
+    api.defaults.headers.common.Authorization = `Bearer ${token}`
+  } else {
+    delete api.defaults.headers.common.Authorization
+  }
+}
+
+export const login = (rut: string, contrasena: string) =>
+  api.post<LoginResponse>('/auth/login', { rut, contrasena })
 
 export const getPlates = (q?: string) =>
   api.get('/placas', { params: { q } })

@@ -1,8 +1,9 @@
-import { Link, Outlet, useLocation } from 'react-router-dom'
-import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, AppBar, Typography, Box } from '@mui/material'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { Drawer, List, ListItemButton, ListItemIcon, ListItemText, Toolbar, AppBar, Typography, Box, Button } from '@mui/material'
 import HomeIcon from '@mui/icons-material/Home'
 import HistoryIcon from '@mui/icons-material/History'
 import BadgeIcon from '@mui/icons-material/Badge'
+import { useAuth } from '../context/AuthContext'
 
 const drawerWidth = 220
 
@@ -14,11 +15,30 @@ const items = [
 
 export default function DashboardLayout() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
+  const { session, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login', { replace: true })
+  }
 
   return (
     <Box className="min-h-screen bg-gray-50">
       <AppBar position="fixed" sx={{ zIndex: 1300 }}>
-        <Toolbar><Typography variant="h6" className="font-semibold">Resipark</Typography></Toolbar>
+        <Toolbar sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+          <Typography variant="h6" className="font-semibold">Resipark</Typography>
+          {session ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="body2" className="text-white/80">
+                {session.nombre} · {session.rut}
+              </Typography>
+              <Button color="inherit" size="small" onClick={handleLogout}>
+                Cerrar sesión
+              </Button>
+            </Box>
+          ) : null}
+        </Toolbar>
       </AppBar>
 
       <Drawer
