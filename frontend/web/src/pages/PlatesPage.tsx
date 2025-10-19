@@ -29,8 +29,11 @@ export default function PlatesPage() {
   const [editTipo, setEditTipo] = useState<number>(1) // default Auto
 
   const isMountedRef = useRef(true)
-  useEffect(() => () => {
-    isMountedRef.current = false
+  useEffect(() => {
+    isMountedRef.current = true
+    return () => {
+      isMountedRef.current = false
+    }
   }, [])
 
   const fetchData = useCallback(async () => {
