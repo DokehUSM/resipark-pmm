@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -6,13 +6,16 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  ScrollView,
+  RefreshControl,
 } from "react-native";
 import { router, Href } from "expo-router";
 import { Colors, Typography } from "@/theme";
-import Svg, { Path, Text as SvgText } from "react-native-svg";
+import Svg, { Path, Text as SvgText, Circle } from "react-native-svg";
 import { fetchAvailabilityTotals } from "@/services/availability";
 import { listarReservas, Reserva } from "@/services/reservas";
 import { useAuth } from "@/context/AuthContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function goTo(path: Href) {
   return () => router.push(path);
@@ -22,11 +25,12 @@ type StatusKey = "libre" | "reservado" | "ocupado";
 type AvailabilitySlice = { label: string; value: number; color: string };
 
 type PieSegment = {
-  path: string;
+  path?: string;
   color: string;
   percent: number;
   labelX: number;
   labelY: number;
+  isFullCircle?: boolean;
 };
 
 type ActiveReserva = {
@@ -53,6 +57,9 @@ const STATUS_COLORS: Record<StatusKey, string> = {
   reservado: Colors.warning,
   ocupado: Colors.danger,
 };
+
+const AVAILABILITY_CACHE_KEY = "home:availability";
+const RESERVAS_CACHE_KEY = "home:reservas";
 
 const hasIntl = typeof Intl !== "undefined" && typeof Intl.DateTimeFormat === "function";
 
@@ -98,28 +105,39 @@ function createPiePaths(
     const endAngle = startAngle + angle;
 
     if (slice.value > 0) {
-      const x1 = radius + radius * Math.cos(startAngle);
-      const y1 = radius + radius * Math.sin(startAngle);
-      const x2 = radius + radius * Math.cos(endAngle);
-      const y2 = radius + radius * Math.sin(endAngle);
-
-      const largeArcFlag = angle > Math.PI ? 1 : 0;
-
-      const pathData = [
-        `M${radius},${radius}`,
-        `L${x1},${y1}`,
-        `A${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2}`,
-        "Z",
-      ].join(" ");
-
-      const midAngle = (startAngle + endAngle) / 2;
-      const labelRadius = radius * 0.6;
-      const labelX = radius + labelRadius * Math.cos(midAngle);
-      const labelY = radius + labelRadius * Math.sin(midAngle);
-
       const percent = Math.round((slice.value / total) * 100);
+      const isFullCircle = angle >= Math.PI * 2 - 1e-6;
 
-      segments.push({ path: pathData, color: slice.color, percent, labelX, labelY });
+      if (isFullCircle) {
+        segments.push({
+          color: slice.color,
+          percent,
+          labelX: radius,
+          labelY: radius,
+          isFullCircle: true,
+        });
+      } else {
+        const x1 = radius + radius * Math.cos(startAngle);
+        const y1 = radius + radius * Math.sin(startAngle);
+        const x2 = radius + radius * Math.cos(endAngle);
+        const y2 = radius + radius * Math.sin(endAngle);
+
+        const largeArcFlag = angle > Math.PI ? 1 : 0;
+
+        const pathData = [
+          `M${radius},${radius}`,
+          `L${x1},${y1}`,
+          `A${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2}`,
+          "Z",
+        ].join(" ");
+
+        const midAngle = (startAngle + endAngle) / 2;
+        const labelRadius = radius * 0.6;
+        const labelX = radius + labelRadius * Math.cos(midAngle);
+        const labelY = radius + labelRadius * Math.sin(midAngle);
+
+        segments.push({ path: pathData, color: slice.color, percent, labelX, labelY });
+      }
     }
 
     startAngle = endAngle;
@@ -143,55 +161,190 @@ export default function Home() {
   const size = 120;
   const radius = size / 2;
   const { token } = useAuth();
+  const isMountedRef = useRef(true);
 
   const [availabilityCounts, setAvailabilityCounts] = useState<Record<StatusKey, number>>(INITIAL_COUNTS);
   const [availabilityLoading, setAvailabilityLoading] = useState(false);
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [reservasLoading, setReservasLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const loadAvailability = useCallback(async () => {
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [[, availabilityRaw], [, reservasRaw]] = await AsyncStorage.multiGet([
+          AVAILABILITY_CACHE_KEY,
+          RESERVAS_CACHE_KEY,
+        ]);
+
+        if (cancelled) return;
+
+        if (availabilityRaw) {
+          try {
+            const parsed = JSON.parse(availabilityRaw) as Partial<Record<StatusKey, unknown>>;
+            const nextCounts: Record<StatusKey, number> = { ...INITIAL_COUNTS };
+            (Object.keys(nextCounts) as StatusKey[]).forEach((key) => {
+              const maybeNumber = parsed?.[key];
+              if (typeof maybeNumber === "number" && Number.isFinite(maybeNumber)) {
+                nextCounts[key] = maybeNumber;
+              }
+            });
+            setAvailabilityCounts(nextCounts);
+          } catch (error) {
+            console.error("No se pudo parsear cache de disponibilidad", error);
+          }
+        }
+
+        if (reservasRaw) {
+          try {
+            const parsed = JSON.parse(reservasRaw);
+            if (Array.isArray(parsed)) {
+              setReservas(parsed as Reserva[]);
+            }
+          } catch (error) {
+            console.error("No se pudo parsear cache de reservas", error);
+          }
+        }
+      } catch (error) {
+        console.error("Error cargando cache de Home", error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const loadAvailability = useCallback(async (options: { silent?: boolean } = {}) => {
+    const { silent = false } = options;
+
     if (!token) {
-      setAvailabilityCounts({ ...INITIAL_COUNTS });
+      if (isMountedRef.current) {
+        setAvailabilityCounts({ ...INITIAL_COUNTS });
+      }
+      try {
+        await AsyncStorage.removeItem(AVAILABILITY_CACHE_KEY);
+      } catch (error) {
+        console.error("No se pudo limpiar cache de disponibilidad", error);
+      }
       return;
     }
 
-    setAvailabilityLoading(true);
-    const res = await fetchAvailabilityTotals(token);
-    if (res.ok) {
-      const counts: Record<StatusKey, number> = { ...INITIAL_COUNTS };
-      counts.libre = Math.max(res.data.disponibles, 0);
-      counts.reservado = Math.max(res.data.reservados, 0);
-      counts.ocupado = Math.max(res.data.ocupados, 0);
-      setAvailabilityCounts(counts);
-    } else {
-      Alert.alert("No pudimos obtener la disponibilidad", res.error);
+    if (isMountedRef.current) {
+      setAvailabilityLoading(true);
     }
-    setAvailabilityLoading(false);
+
+    try {
+      const res = await fetchAvailabilityTotals(token);
+      if (res.ok) {
+        const counts: Record<StatusKey, number> = { ...INITIAL_COUNTS };
+        counts.libre = Math.max(res.data.disponibles, 0);
+        counts.reservado = Math.max(res.data.reservados, 0);
+        counts.ocupado = Math.max(res.data.ocupados, 0);
+
+        if (isMountedRef.current) {
+          setAvailabilityCounts(counts);
+        }
+
+        try {
+          await AsyncStorage.setItem(AVAILABILITY_CACHE_KEY, JSON.stringify(counts));
+        } catch (error) {
+          console.error("No se pudo guardar cache de disponibilidad", error);
+        }
+      } else if (!silent && isMountedRef.current) {
+        Alert.alert("No pudimos obtener la disponibilidad", res.error);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setAvailabilityLoading(false);
+      }
+    }
   }, [token]);
 
-  const loadReservas = useCallback(async () => {
+  const loadReservas = useCallback(async (options: { silent?: boolean } = {}) => {
+    const { silent = false } = options;
+
     if (!token) {
-      setReservas([]);
+      if (isMountedRef.current) {
+        setReservas([]);
+      }
+      try {
+        await AsyncStorage.removeItem(RESERVAS_CACHE_KEY);
+      } catch (error) {
+        console.error("No se pudo limpiar cache de reservas", error);
+      }
       return;
     }
 
-    setReservasLoading(true);
-    const res = await listarReservas(token);
-    if (res.ok) {
-      setReservas(res.data);
-    } else {
-      Alert.alert("No pudimos obtener tus reservas", res.error);
+    if (isMountedRef.current) {
+      setReservasLoading(true);
     }
-    setReservasLoading(false);
+
+    try {
+      const res = await listarReservas(token);
+      if (res.ok) {
+        if (isMountedRef.current) {
+          setReservas(res.data);
+        }
+        try {
+          await AsyncStorage.setItem(RESERVAS_CACHE_KEY, JSON.stringify(res.data));
+        } catch (error) {
+          console.error("No se pudo guardar cache de reservas", error);
+        }
+      } else if (!silent && isMountedRef.current) {
+        Alert.alert("No pudimos obtener tus reservas", res.error);
+      }
+    } finally {
+      if (isMountedRef.current) {
+        setReservasLoading(false);
+      }
+    }
   }, [token]);
 
   useEffect(() => {
-    loadAvailability();
+    loadAvailability().catch((error) =>
+      console.error("Carga inicial de disponibilidad fallo", error)
+    );
   }, [loadAvailability]);
 
   useEffect(() => {
-    loadReservas();
+    loadReservas().catch((error) =>
+      console.error("Carga inicial de reservas fallo", error)
+    );
   }, [loadReservas]);
+
+  useEffect(() => {
+    if (!token) return;
+    const interval = setInterval(() => {
+      loadAvailability({ silent: true }).catch((error) =>
+        console.error("Auto refresh disponibilidad fallo", error)
+      );
+      loadReservas({ silent: true }).catch((error) =>
+        console.error("Auto refresh reservas fallo", error)
+      );
+    }, 60_000);
+    return () => clearInterval(interval);
+  }, [token, loadAvailability, loadReservas]);
+
+  const handleRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([loadAvailability(), loadReservas()]);
+    } finally {
+      if (isMountedRef.current) {
+        setRefreshing(false);
+      }
+    }
+  }, [refreshing, loadAvailability, loadReservas]);
 
   const availabilityData = useMemo<AvailabilitySlice[]>(
     () => [
@@ -227,7 +380,20 @@ export default function Home() {
   const activeReservas = useMemo(() => toActiveReservas(reservas), [reservas]);
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.screen}
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            void handleRefresh();
+          }}
+          colors={[Colors.primary]}
+          tintColor={Colors.primary}
+        />
+      }
+    >
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Reserva de estacionamientos</Text>
 
@@ -258,7 +424,11 @@ export default function Home() {
                 <Svg width={size} height={size}>
                   {paths.map((slice, i) => (
                     <React.Fragment key={`slice-${i}`}>
-                      <Path d={slice.path} fill={slice.color} />
+                      {slice.isFullCircle ? (
+                        <Circle cx={radius} cy={radius} r={radius} fill={slice.color} />
+                      ) : (
+                        slice.path && <Path d={slice.path} fill={slice.color} />
+                      )}
                       <SvgText
                         x={slice.labelX}
                         y={slice.labelY}
@@ -328,16 +498,20 @@ export default function Home() {
           <Text style={styles.actionButtonText}>Ver reservas activas</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  screen: {
     flex: 1,
     backgroundColor: Colors.lightGray,
+  },
+  container: {
+    flexGrow: 1,
     padding: 24,
     paddingBottom: 40,
+    backgroundColor: Colors.lightGray,
     justifyContent: "center",
   },
   card: {
