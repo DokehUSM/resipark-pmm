@@ -37,7 +37,8 @@ type ActiveReserva = {
   id: number;
   placa: string;
   rut: string;
-  horario: string;
+  horaInicio: string;
+  horaTermino: string;
 };
 
 const INITIAL_COUNTS: Record<StatusKey, number> = {
@@ -72,13 +73,19 @@ function formatHorario(horaInicio: string, horaTermino: string) {
   const end = new Date(horaTermino);
 
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-    return `${horaInicio} - ${horaTermino}`;
+    return {
+      inicio: horaInicio,
+      termino: horaTermino,
+    };
   }
 
   if (!hasIntl) {
     const startText = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
     const endText = `${pad(end.getHours())}:${pad(end.getMinutes())}`;
-    return `${startText} - ${endText}`;
+    return {
+      inicio: startText,
+      termino: endText,
+    };
   }
 
   const formatter = new Intl.DateTimeFormat("es-CL", {
@@ -86,7 +93,10 @@ function formatHorario(horaInicio: string, horaTermino: string) {
     minute: "2-digit",
   });
 
-  return `${formatter.format(start)} - ${formatter.format(end)}`;
+  return {
+    inicio: formatter.format(start),
+    termino: formatter.format(end),
+  };
 }
 
 function createPiePaths(
@@ -149,12 +159,16 @@ function createPiePaths(
 function toActiveReservas(reservas: Reserva[]): ActiveReserva[] {
   return reservas
     .filter((item) => item.estado_reserva?.toLowerCase() === "activa")
-    .map((item) => ({
-      id: item.id,
-      placa: item.placa_patente_visitante,
-      rut: item.rut_visitante,
-      horario: formatHorario(item.hora_inicio, item.hora_termino),
-    }));
+    .map((item) => {
+      const rango = formatHorario(item.hora_inicio, item.hora_termino);
+      return {
+        id: item.id,
+        placa: item.placa_patente_visitante,
+        rut: item.rut_visitante,
+        horaInicio: rango.inicio,
+        horaTermino: rango.termino,
+      };
+    });
 }
 
 export default function Home() {
@@ -483,7 +497,12 @@ export default function Home() {
                   <Text style={styles.reservationPlate}>{item.placa}</Text>
                   <Text style={styles.reservationRut}>{item.rut}</Text>
                 </View>
-                <Text style={styles.reservationTime}>{item.horario}</Text>
+                <View style={styles.reservationRight}>
+                  <Text style={styles.reservationTime}>{item.horaInicio}</Text>
+                  <Text style={[styles.reservationTime, styles.reservationTimeSecondary]}>
+                    {item.horaTermino}
+                  </Text>
+                </View>
               </View>
             ))
           )}
@@ -635,7 +654,7 @@ const styles = StyleSheet.create({
     borderTopColor: Colors.lightGray,
   },
   reservationLeft: {
-    flexShrink: 1,
+    flex: 1,
   },
   reservationPlate: {
     fontSize: Typography.body,
@@ -647,10 +666,15 @@ const styles = StyleSheet.create({
     color: Colors.gray,
     marginTop: 2,
   },
+  reservationRight: {
+    alignItems: "flex-end",
+  },
   reservationTime: {
     fontSize: Typography.body,
     color: Colors.dark,
-    marginLeft: 16,
     textAlign: "right",
+  },
+  reservationTimeSecondary: {
+    marginTop: 2,
   },
 });
