@@ -6,7 +6,7 @@ export type LoginResult =
   | { ok: false; error: string };
 
 export async function login(
-  id_departamento: string,
+  correo: string,
   contrasena: string
 ): Promise<LoginResult> {
   const baseUrl = tryGetCurrentApiUrl();
@@ -18,7 +18,7 @@ export async function login(
     const res = await fetch(`${baseUrl}/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id_departamento, contrasena }),
+      body: JSON.stringify({ correo, contrasena }),
     });
 
     let json: any = {};
