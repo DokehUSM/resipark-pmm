@@ -34,7 +34,7 @@ export default function SettingsScreen() {
 
   const handleSubmit = useCallback(async () => {
     if (!isValid) {
-      Alert.alert("URL no valida", "Ingresa una URL que comience con http o https");
+      Alert.alert("URL no válida", "Ingresa una URL que comience con http o https");
       return;
     }
 
@@ -45,7 +45,7 @@ export default function SettingsScreen() {
       else router.replace("/");
     } catch (error) {
       console.error("No se pudo guardar la URL", error);
-      Alert.alert("Error", "No se pudo guardar la URL. Intentalo nuevamente.");
+      Alert.alert("Error", "No se pudo guardar la URL. Inténtalo nuevamente.");
     } finally {
       setSubmitting(false);
     }

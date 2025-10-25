@@ -485,7 +485,7 @@ export default function Home() {
             </View>
           ) : activeReservas.length === 0 ? (
             <View style={styles.reservationsPlaceholder}>
-              <Text style={styles.reservationsEmpty}>No tienes reservas activas.</Text>
+              <Text style={styles.reservationsEmpty}>No tienes reservas activas</Text>
               <Text style={styles.reservationsHelper}>
                 Crea una nueva reserva o refresca más tarde para ver actualizaciones.
               </Text>

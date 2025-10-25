@@ -240,12 +240,12 @@ export default function Booking() {
 
           <View style={styles.noticeBox}>
             <Text style={styles.noticeText}>
-              Las reservas comienzan al confirmar y finalizan {RESERVATION_DURATION_HOURS} horas despues ({previewRangeLabel}).
+              Las reservas comienzan al confirmar y finalizan {RESERVATION_DURATION_HOURS} horas después ({previewRangeLabel})
             </Text>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Numero de patente</Text>
+            <Text style={styles.label}>Número de patente</Text>
             <TextInput
               style={styles.input}
               placeholder="ABC123"

@@ -43,7 +43,7 @@ export async function crearReserva(
   token: string | null
 ): Promise<CrearReservaResp> {
   if (!token) {
-    return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
+    return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesión" };
   }
 
   const baseUrl = tryGetCurrentApiUrl();
@@ -74,7 +74,7 @@ export async function crearReserva(
 
 export async function listarReservas(token: string | null): Promise<ListarReservasResp> {
   if (!token) {
-    return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
+    return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesión" };
   }
 
   const baseUrl = tryGetCurrentApiUrl();
@@ -123,7 +123,7 @@ export async function cancelarReserva(
   token: string | null
 ): Promise<CancelarReservaResp> {
   if (!token) {
-    return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
+    return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesión" };
   }
 
   const baseUrl = tryGetCurrentApiUrl();

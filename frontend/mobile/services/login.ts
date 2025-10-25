@@ -37,6 +37,6 @@ export async function login(
 
     return { ok: true, data: json as LoginResponse };
   } catch {
-    return { ok: false, error: "No hay conexion con el servidor" };
+    return { ok: false, error: "No hay conexión con el servidor" };
   }
 }

@@ -56,7 +56,7 @@ export async function fetchAvailabilityTotals(token: string | null): Promise<
   { ok: true; data: AvailabilityTotals } | { ok: false; error: string }
 > {
   if (!token) {
-    return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesion" };
+    return { ok: false, error: "Sesion expirada. Vuelve a iniciar sesión" };
   }
 
   const baseUrl = tryGetCurrentApiUrl();

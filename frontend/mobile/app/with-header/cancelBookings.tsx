@@ -152,7 +152,7 @@ export default function CancelBookings() {
 
       {!showLoadingState && activeReservas.length === 0 && (
         <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>No tienes reservas activas por ahora.</Text>
+          <Text style={styles.emptyText}>No tienes reservas activas por ahora</Text>
         </View>
       )}
 

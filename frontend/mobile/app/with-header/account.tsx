@@ -22,12 +22,12 @@ export default function Account() {
         <Ionicons name="business-outline" size={128} color={Colors.gray} />
       </View>
 
-      {/* Número de depto */}
-      <Text style={styles.info}>Número de depto.: {departamento ?? "—"}</Text>
+      {/* Número de departamento */}
+      <Text style={styles.info}>Número departamento: {departamento ?? "—"}</Text>
 
-      {/* Cerrar Sesión */}
+      {/* Cerrar sesión */}
       <TouchableOpacity style={styles.button} onPress={handleLogout}>
-        <Text style={styles.buttonText}>Cerrar Sesión</Text>
+        <Text style={styles.buttonText}>Cerrar sesión</Text>
       </TouchableOpacity>
 
       {/* Link Cambiar contraseña */}

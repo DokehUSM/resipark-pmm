@@ -57,8 +57,8 @@ export default function Login() {
     const result = await loginApi(email.trim(), password);
 
     if (!result.ok) {
-      Alert.alert("No pudimos iniciar sesion", result.error);
-      console.log("No se pudo iniciar sesion");
+      Alert.alert("No pudimos iniciar sesión", result.error);
+      console.log("No se pudo iniciar sesión");
       return;
     }
 
@@ -89,7 +89,7 @@ export default function Login() {
         keyboardShouldPersistTaps="handled"
       >
         <Text style={styles.welcome}>Bienvenido</Text>
-        <Text style={styles.title}>Iniciar Sesion</Text>
+        <Text style={styles.title}>Iniciar Sesión</Text>
 
         <TouchableOpacity
           style={styles.logoWrapper}
@@ -104,7 +104,7 @@ export default function Login() {
         </TouchableOpacity>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Correo electronico</Text>
+          <Text style={styles.label}>Correo electrónico</Text>
           <TextInput
             style={styles.input}
             placeholder="correo@ejemplo.com"
@@ -121,7 +121,7 @@ export default function Login() {
         </View>
 
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Contrasena</Text>
+          <Text style={styles.label}>Contraseña</Text>
           <View style={styles.passwordWrapper}>
             <TextInput
               style={[styles.input, styles.passwordInput]}
