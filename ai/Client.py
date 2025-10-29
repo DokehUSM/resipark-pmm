@@ -1,16 +1,17 @@
 import cv2
 import requests
 import time
+import subprocess
 import numpy as np
 from datetime import datetime
 import os
 
 # URLs de las APIs
-URL_DETECCION = "https://characterized-consciousness-functioning-effectively.trycloudflare.com/predict"
-URL_VERIFICACION = "http://localhost:8003/verificar-patente"
-URL_REGISTRO_RESIDENTE = "http://localhost:8003/registrar-ingreso-residente"
-URL_REGISTRO_VISITANTE = "http://localhost:8003/registrar-ingreso-visitante"
-url = "./Videos de demostracion/video prueba.mp4"
+URL_DETECCION = "https://greeting-ryan-requesting-june.trycloudflare.com/predict"
+URL_VERIFICACION = "http://192.168.100.11:8003/verificar-patente"
+URL_REGISTRO_RESIDENTE = "http://192.168.100.11:8003/registrar-ingreso-residente"
+URL_REGISTRO_VISITANTE = "http://192.168.100.11:8003/registrar-ingreso-visitante"
+url = "Video prueba.mp4"
 
 
 # Configuración de la camara
@@ -123,11 +124,17 @@ try:
 
                                     # 3. REGISTRAR INGRESO   Aqui deberia abrirse el porton
 
+
+
+                                    
+
                                     resultado_registro = registrar_ingreso(patente_text, resultado_verificacion["tipo"])
                                     
                                     if resultado_registro["success"]:
                                         print(f"   ✅ {resultado_registro['mensaje']}")
                                         tiempo = True
+                                        ## Codigo para abrir el porton
+                                        subprocess.run(["python3", "/home/aceve/remoto.py"])
                                         #time.sleep(5)
                                     else:
                                         print(f"   ⚠️  Error en registro: {resultado_registro['mensaje']}")
